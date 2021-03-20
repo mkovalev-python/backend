@@ -115,13 +115,24 @@ REST_FRAMEWORK = {
     ),
 }
 
+CORS_ORIGIN_ALLOW_ALL = DEBUG
+
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
 CORS_ORIGIN_WHITELIST = (
     'https://localhost:3000',
 )
 
 
 JWT_AUTH = {
-    # 'JWT_RESPONSE_PAYLOAD_HANDLER': 'server.utils.my_jwt_response_handler',
+    'JWT_RESPONSE_PAYLOAD_HANDLER': 'backend.utils.my_jwt_response_handler',
     'JWT_EXPIRATION_DELTA': timedelta(days=2),
     'JWT_ALLOW_REFRESH': True,
     'JWT_REFRESH_EXPIRATION_DELTA': timedelta(days=7),
