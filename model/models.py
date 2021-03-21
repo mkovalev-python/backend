@@ -14,10 +14,10 @@ class Profile(models.Model):
     country = models.ForeignKey('Country', on_delete=models.CASCADE, null=False, to_field='country')
     birthday = models.DateField('Дата рождения', null=False)
     team = models.ForeignKey('Team', on_delete=models.CASCADE, to_field='name', verbose_name='Команда')
-    avatar = models.ImageField('Аватар', width_field=400, height_field=400)
+    avatar = models.ImageField('Аватар', upload_to='avatar/',)
 
     def __str__(self):
-        return self.username
+        return str(self.username)
 
     class Meta:
         verbose_name = 'Данные пользователя'
@@ -48,3 +48,31 @@ class Team(models.Model):
     class Meta:
         verbose_name = 'Команда'
         verbose_name_plural = 'Команды'
+
+
+class PermissionUser(models.Model):
+    """Модель ролей у пользователя системы"""
+
+    username = models.OneToOneField(User, on_delete=models.CASCADE, to_field='username')
+    permission = models.ForeignKey('Permission', on_delete=models.CASCADE, to_field='slug')
+
+    def __str__(self):
+        return str(self.username)
+
+    class Meta:
+        verbose_name = 'Роль пользователя'
+        verbose_name_plural = 'Роли пользователя'
+
+
+class Permission(models.Model):
+    """Модель ролей системы"""
+
+    name = models.CharField('Роли', unique=True, max_length=100)
+    slug = models.SlugField('Slug название', unique=True, max_length=100)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = 'Роль'
+        verbose_name_plural = 'Роли'

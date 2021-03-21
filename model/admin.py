@@ -5,25 +5,27 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 
-from model.models import Profile, Country, Team
+from model.models import Profile, Country, Team, PermissionUser, Permission
 
 
 class UserInline(admin.StackedInline):
     model = Profile
     can_delete = False
     verbose_name_plural = 'Доп. информация'
-    readonly_fields = ["preview"]
 
-    @staticmethod
-    def preview(obj):
-        return mark_safe(f'<img src="{obj.image.url}" height="100" width="100">')
+
+class PermissionInline(admin.StackedInline):
+    model = PermissionUser
+    can_delete = False
+    verbose_name_plural = 'Роль пользователя'
 
 
 class UserAd(UserAdmin):
-    inlines = (UserInline,)
+    inlines = (UserInline, PermissionInline)
 
 
 admin.site.unregister(User)
 admin.site.register(User, UserAd)
 admin.site.register(Country)
 admin.site.register(Team)
+admin.site.register(Permission)
