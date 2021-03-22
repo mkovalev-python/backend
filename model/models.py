@@ -14,7 +14,7 @@ class Profile(models.Model):
     country = models.ForeignKey('Country', on_delete=models.CASCADE, null=False, to_field='country')
     birthday = models.DateField('Дата рождения', null=False)
     team = models.ForeignKey('Team', on_delete=models.CASCADE, to_field='name', verbose_name='Команда')
-    avatar = models.ImageField('Аватар', upload_to='avatar/',)
+    avatar = models.ImageField('Аватар', upload_to='avatar/', default='avatar/josh-d-avatar.jpg')
 
     def __str__(self):
         return str(self.username)

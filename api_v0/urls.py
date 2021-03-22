@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token
 
-from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreateUser
+from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreateUser,GetUserList,DeleteUser
 
 urlpatterns = [
     path('token/obtain/', obtain_jwt_token),
@@ -10,4 +10,6 @@ urlpatterns = [
     path('get/user/info/', GetUserInfo.as_view()),
     path('get/list/option/', GetListOption.as_view()),
     path('post/create/user/', PostCreateUser.as_view()),
+    path('get/user/list/', GetUserList.as_view()),
+    path('delete/user/', DeleteUser.as_view()),
 ]

@@ -1,10 +1,6 @@
-from datetime import datetime
-from pathlib import Path
-
-from django.shortcuts import render
-
-# Create your views here.
+from django.contrib.auth.models import User
 from rest_framework import permissions, status
+
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -57,12 +53,63 @@ class PostCreateUser(APIView):
 
     @staticmethod
     def post(request):
-        req = request.data
 
         serializer = UserSerializerWithToken(
             data={'username': request.data['username'], 'password': request.data['password']})
+
         if serializer.is_valid():
-            #serializer.save()
+            serializer.save()
+            create_info_for_user = Profile(
+                first_name=request.data['first_name'],
+                last_name=request.data['last_name'],
+                birthday=request.data['birthday'].split('T')[0],
+                country_id=request.data['country'],
+                team_id=request.data['team'],
+                username_id=request.data['username'],
+            ).save()
+            create_permission_for_user = PermissionUser(
+                permission_id=request.data['permission'],
+                username_id=request.data['username']).save()
+        else:
+            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        return Response(status=status.HTTP_201_CREATED)
 
 
-        return Response()
+class GetUserList(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        username = User.objects.all()
+        data = []
+        for username in username:
+            dict_user = {}
+            user_info = Profile.objects.get(username_id=username.username)
+            user_permission = PermissionUser.objects.get(username_id=username.username)
+
+            dict_user = {
+                'username': username.username,
+                'first_name': user_info.first_name,
+                'last_name': user_info.last_name,
+                'birthday': user_info.birthday,
+                'country': user_info.country_id,
+                'team': user_info.team_id,
+                'permission': user_permission.permission.name
+            }
+
+            data.append(dict_user)
+        return Response(data)
+
+
+class DeleteUser(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def delete(request):
+
+        User.objects.filter(username=request.data['username']).delete()
+        Profile.objects.filter(username_id=request.data['username']).delete()
+        PermissionUser.objects.filter(username_id=request.data['username']).delete()
+
+        return Response(status=status.HTTP_202_ACCEPTED)
