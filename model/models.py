@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -76,3 +78,36 @@ class Permission(models.Model):
     class Meta:
         verbose_name = 'Роль'
         verbose_name_plural = 'Роли'
+
+
+class Polls(models.Model):
+    """Модель опросов"""
+
+    title = models.CharField('Заголовок', max_length=255)
+    description = models.CharField('Описание', max_length=510)
+    category = models.CharField('Категория', max_length=100)
+    latePosting = models.BooleanField('Отложная публикация?', default=False)
+    datePosting = models.DateTimeField('Дата и время публикации', default=datetime.now())
+    in_archive = models.BooleanField('Архивный опрос?', default=False)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = 'Опрос'
+        verbose_name_plural = 'Опросы'
+
+
+class Questions(models.Model):
+    """Модель вопросов и ответов"""
+
+    poll = models.ForeignKey(Polls, on_delete=models.CASCADE)
+    question = models.CharField('Вопрос', max_length=255)
+    answer = models.CharField('Ответ', max_length=255)
+
+    def __str__(self):
+        return self.question
+
+    class Meta:
+        verbose_name = 'Вопрос'
+        verbose_name_plural = 'Вопросы'

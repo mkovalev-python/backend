@@ -4,7 +4,7 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from model.models import PermissionUser, Profile, Permission, Team, Country
+from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
     CountrySerializer, UserSerializerWithToken
 
@@ -107,9 +107,38 @@ class DeleteUser(APIView):
 
     @staticmethod
     def delete(request):
-
         User.objects.filter(username=request.data['username']).delete()
         Profile.objects.filter(username_id=request.data['username']).delete()
         PermissionUser.objects.filter(username_id=request.data['username']).delete()
 
         return Response(status=status.HTTP_202_ACCEPTED)
+
+
+class CreateNewPoll(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    @staticmethod
+    def post(request):
+
+        if request.data['info']['latePosting']:
+            create_poll = Polls(title=request.data['info']['title'],
+                                description=request.data['info']['description'],
+                                category=request.data['info']['category'],
+                                latePosting=request.data['info']['latePosting'],
+                                datePosting=request.data['info']['datePosting']).save()
+        else:
+            create_poll = Polls(title=request.data['info']['title'],
+                                description=request.data['info']['description'],
+                                category=request.data['info']['category']).save()
+
+        for question in request.data['questions']:
+            str_answer = ''
+            for answer in question['answers']:
+                str_answer += ' ' + answer['answer']
+
+            create_question = Questions(poll_id=Polls.objects.get(title=request.data['info']['title'],
+                                                                  description=request.data['info']['description']).id,
+                                        question=question['question'],
+                                        answer=str_answer).save()
+
+        return Response(status=status.HTTP_201_CREATED)

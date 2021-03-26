@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 
-from model.models import Profile, Country, Team, PermissionUser, Permission
+from model.models import Profile, Country, Team, PermissionUser, Permission, Polls, Questions
 
 
 class UserInline(admin.StackedInline):
@@ -29,3 +29,5 @@ admin.site.register(User, UserAd)
 admin.site.register(Country)
 admin.site.register(Team)
 admin.site.register(Permission)
+admin.site.register(Polls)
+admin.site.register(Questions)

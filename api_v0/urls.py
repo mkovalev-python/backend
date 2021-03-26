@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token
 
-from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreateUser,GetUserList,DeleteUser
+from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreateUser,GetUserList,DeleteUser,CreateNewPoll
 
 urlpatterns = [
     path('token/obtain/', obtain_jwt_token),
@@ -12,4 +12,5 @@ urlpatterns = [
     path('post/create/user/', PostCreateUser.as_view()),
     path('get/user/list/', GetUserList.as_view()),
     path('delete/user/', DeleteUser.as_view()),
+    path('create/new/poll/', CreateNewPoll.as_view()),
 ]
