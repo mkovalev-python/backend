@@ -4,6 +4,7 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from api_v0.utils_views import save_poll_participant, save_poll_all
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
     CountrySerializer, UserSerializerWithToken
@@ -119,26 +120,10 @@ class CreateNewPoll(APIView):
 
     @staticmethod
     def post(request):
-
-        if request.data['info']['latePosting']:
-            create_poll = Polls(title=request.data['info']['title'],
-                                description=request.data['info']['description'],
-                                category=request.data['info']['category'],
-                                latePosting=request.data['info']['latePosting'],
-                                datePosting=request.data['info']['datePosting']).save()
+        req = request.data
+        if req['info']['category'] == 'participant':
+            status = save_poll_participant(req)
         else:
-            create_poll = Polls(title=request.data['info']['title'],
-                                description=request.data['info']['description'],
-                                category=request.data['info']['category']).save()
+            status = save_poll_all(req)
 
-        for question in request.data['questions']:
-            str_answer = ''
-            for answer in question['answers']:
-                str_answer += ' ' + answer['answer']
-
-            create_question = Questions(poll_id=Polls.objects.get(title=request.data['info']['title'],
-                                                                  description=request.data['info']['description']).id,
-                                        question=question['question'],
-                                        answer=str_answer).save()
-
-        return Response(status=status.HTTP_201_CREATED)
+        return Response(status=status)
