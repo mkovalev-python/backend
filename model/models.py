@@ -86,6 +86,7 @@ class Polls(models.Model):
     title = models.CharField('Заголовок', max_length=255)
     description = models.CharField('Описание', max_length=510)
     category = models.CharField('Категория', max_length=100)
+    points = models.IntegerField('Баллы', default=10)
     latePosting = models.BooleanField('Отложная публикация?', default=False)
     datePosting = models.DateTimeField('Дата и время публикации', default=datetime.now())
     in_archive = models.BooleanField('Архивный опрос?', default=False)

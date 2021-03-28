@@ -1,3 +1,5 @@
+import datetime
+
 from django.contrib.auth.models import User
 from rest_framework import permissions, status
 
@@ -7,7 +9,7 @@ from rest_framework.views import APIView
 from api_v0.utils_views import save_poll_participant, save_poll_all
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
-    CountrySerializer, UserSerializerWithToken
+    CountrySerializer, UserSerializerWithToken, PollsSerializer
 
 
 class CheckPermission(APIView):
@@ -121,9 +123,81 @@ class CreateNewPoll(APIView):
     @staticmethod
     def post(request):
         req = request.data
-        if req['info']['category'] == 'participant':
+        if req['info']['values']['category'] == 'participant':
             status = save_poll_participant(req)
         else:
             status = save_poll_all(req)
 
         return Response(status=status)
+
+
+class GetActivePolls(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        queryset = Polls.objects.filter(in_archive=False, latePosting=False)
+        serializer = PollsSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class GetLatePolls(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        queryset = Polls.objects.filter(in_archive=False, latePosting=True)
+        serializer = PollsSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class GetArchivePolls(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        queryset = Polls.objects.filter(in_archive=True)
+        serializer = PollsSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class GetViewPoll(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        queryset = Polls.objects.filter(id=request.query_params['id'])
+        serializer_poll = PollsSerializer(queryset, many=True).data
+
+        queryset = Questions.objects.filter(poll_id=request.query_params['id'])
+        list_questions = []
+        i = 0
+        for item in queryset:
+            question = item.question
+            answer = item.answer.split(' ')
+            del answer[0]
+            i += 1
+            list_questions.append({'question': question, 'answer': answer, 'id': i})
+
+        data = {'poll_info': serializer_poll, 'questions': list_questions}
+
+        return Response(data)
+
+
+class MovePolls(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    @staticmethod
+    def post(request):
+        poll = Polls.objects.get(id=request.data['id'])
+        if request.data['type'] == 'archive':
+            poll.in_archive = True
+            poll.save()
+        if request.data['type'] == 'delete':
+            poll.delete()
+        if request.data['type'] == 'public':
+            poll.latePosting = False
+            poll.in_archive = False
+            poll.datePosting = datetime.datetime.now()
+            poll.save()
+        return Response(status=status.HTTP_200_OK)

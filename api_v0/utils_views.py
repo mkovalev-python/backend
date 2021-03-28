@@ -7,8 +7,8 @@ from model.models import Polls, Questions
 
 def save_poll_participant(request):
 
-    if Polls.objects.filter(in_archive=False).exists():
-        set_archive = Polls.objects.get(in_archive=False)
+    if Polls.objects.filter(in_archive=False, category='participant').exists():
+        set_archive = Polls.objects.get(in_archive=False, category='participant')
         set_archive.in_archive = True
         set_archive.save()
 
@@ -35,19 +35,21 @@ def save_poll_all(request):
 
 def general_save(request):
     if request['latePosting']:
-        Polls(title=request['title'],
-              description=request['description'],
-              category=request['category'],
+        Polls(title=request['values']['title'],
+              description=request['values']['description'],
+              category=request['values']['category'],
+              points=request['values']['points'],
               latePosting=request['latePosting'],
-              datePosting=request['datePosting']).save()
+              datePosting=request['values']['datePosting']).save()
     else:
-        Polls(title=request['title'],
-              description=request['description'],
-              category=request['category']).save()
+        Polls(title=request['values']['title'],
+              description=request['values']['description'],
+              points=request['values']['points'],
+              category=request['values']['category']).save()
 
 
 def save_question_and_answer(request, answer, question):
-    Questions(poll_id=Polls.objects.get(title=request['info']['title'],
-                                        description=request['info']['description']).id,
+    Questions(poll_id=Polls.objects.get(title=request['info']['values']['title'],
+                                        description=request['info']['values']['description']).id,
               question=question,
               answer=answer).save()
