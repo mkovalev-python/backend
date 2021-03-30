@@ -6,11 +6,11 @@ from model.models import Polls, Questions
 
 
 def save_poll_participant(request):
-
-    if Polls.objects.filter(in_archive=False, category='participant').exists():
-        set_archive = Polls.objects.get(in_archive=False, category='participant')
-        set_archive.in_archive = True
-        set_archive.save()
+    if not request['info']['latePosting']:
+        if Polls.objects.filter(in_archive=False, category='participant', latePosting=False).exists():
+            set_archive = Polls.objects.get(in_archive=False, latePosting=False, category='participant')
+            set_archive.in_archive = True
+            set_archive.save()
 
     general_save(request['info'])
 

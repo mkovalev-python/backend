@@ -175,7 +175,13 @@ class GetViewPoll(APIView):
         for item in queryset:
             question = item.question
             answer = item.answer.split(' ')
-            del answer[0]
+            if item.poll.category != 'participant':
+                del answer[0]
+            else:
+                for i in range(int(answer[0])):
+                    if i == 0:
+                        answer.clear()
+                    answer.append(i + 1)
             i += 1
             list_questions.append({'question': question, 'answer': answer, 'id': i})
 
@@ -196,6 +202,11 @@ class MovePolls(APIView):
         if request.data['type'] == 'delete':
             poll.delete()
         if request.data['type'] == 'public':
+            if poll.category == 'participant':
+                if Polls.objects.filter(in_archive=False, latePosting=False, category='participant').exists():
+                    poll_last = Polls.objects.get(in_archive=False, latePosting=False, category='participant')
+                    poll_last.in_archive = True
+                    poll_last.save()
             poll.latePosting = False
             poll.in_archive = False
             poll.datePosting = datetime.datetime.now()
