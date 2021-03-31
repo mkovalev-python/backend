@@ -6,10 +6,10 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api_v0.utils_views import save_poll_participant, save_poll_all
-from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions
+from api_v0.utils_views import save_poll_participant, save_poll_all, rating
+from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
-    CountrySerializer, UserSerializerWithToken, PollsSerializer
+    CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer
 
 
 class CheckPermission(APIView):
@@ -33,7 +33,17 @@ class GetUserInfo(APIView):
         get_permission_name = Permission.objects.filter(slug=request.query_params['permission'])
         serializer_permission = PermissionSerializer(get_permission_name, many=True).data
 
-        return Response({'user': serializer_user, 'permission': serializer_permission})
+        if request.query_params['permission'] == 'Participant':
+
+            rating()
+
+            queryset = Rating.objects.filter(username=request.user.username)
+            serializer_rating = RatingSerializer(queryset, many=True).data
+
+            return Response({'user': serializer_user, 'permission': serializer_permission,
+                             'rating': serializer_rating})
+        else:
+            return Response({'user': serializer_user, 'permission': serializer_permission})
 
 
 class GetListOption(APIView):
@@ -73,6 +83,8 @@ class PostCreateUser(APIView):
             create_permission_for_user = PermissionUser(
                 permission_id=request.data['permission'],
                 username_id=request.data['username']).save()
+            create_rating_field = Rating(username_id=request.data['username'],
+                                         rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
         else:
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 

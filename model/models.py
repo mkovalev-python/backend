@@ -112,3 +112,16 @@ class Questions(models.Model):
     class Meta:
         verbose_name = 'Вопрос'
         verbose_name_plural = 'Вопросы'
+
+
+class Rating(models.Model):
+    username = models.OneToOneField(User, on_delete=models.CASCADE, to_field='username', related_name='Пользователь', default=None)
+    points = models.IntegerField('Баллы', default=0)
+    rating = models.IntegerField('Рейтинг', default=100000)
+
+    def __str__(self):
+        return self.username.username
+
+    class Meta:
+        verbose_name = ' Рейтинг'
+        verbose_name_plural = 'Рейтинг'

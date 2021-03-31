@@ -2,7 +2,7 @@ import logging
 
 from rest_framework import status
 
-from model.models import Polls, Questions
+from model.models import Polls, Questions, Rating
 
 
 def save_poll_participant(request):
@@ -53,3 +53,14 @@ def save_question_and_answer(request, answer, question):
                                         description=request['info']['values']['description']).id,
               question=question,
               answer=answer).save()
+
+
+def rating():
+    sort_table = Rating.objects.order_by('-points')
+
+    i = 1
+
+    for user in sort_table:
+        user.rating = i
+        user.save()
+        i += 1

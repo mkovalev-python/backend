@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.settings import api_settings
 
-from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions
+from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -84,4 +84,12 @@ class QuestionsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Questions
+        fields = '__all__'
+
+
+class RatingSerializer(serializers.ModelSerializer):
+    """Сериалайзер рейтинга"""
+
+    class Meta:
+        model = Rating
         fields = '__all__'
