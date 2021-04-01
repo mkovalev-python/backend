@@ -40,12 +40,14 @@ def general_save(request):
               category=request['values']['category'],
               points=request['values']['points'],
               latePosting=request['latePosting'],
-              datePosting=request['values']['datePosting']).save()
+              datePosting=request['values']['datePosting'],
+              session_id=request['values']['session']).save()
     else:
         Polls(title=request['values']['title'],
               description=request['values']['description'],
               points=request['values']['points'],
-              category=request['values']['category']).save()
+              category=request['values']['category'],
+              session_id=request['values']['session']).save()
 
 
 def save_question_and_answer(request, answer, question):

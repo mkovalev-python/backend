@@ -5,7 +5,7 @@ from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 
-from model.models import Profile, Country, Team, PermissionUser, Permission, Polls, Questions, Rating
+from model.models import Profile, Country, Team, PermissionUser, Permission, Polls, Questions, Rating, SessionTC
 
 
 class UserInline(admin.StackedInline):
@@ -24,6 +24,11 @@ class UserAd(UserAdmin):
     inlines = (UserInline, PermissionInline)
 
 
+class SessionTCAdmin(admin.ModelAdmin):
+    model = SessionTC
+    list_display = ['number_session', 'name_session', 'date_from_session', 'date_to_session','active_session']
+
+
 admin.site.unregister(User)
 admin.site.register(User, UserAd)
 admin.site.register(Country)
@@ -32,3 +37,4 @@ admin.site.register(Permission)
 admin.site.register(Polls)
 admin.site.register(Questions)
 admin.site.register(Rating)
+admin.site.register(SessionTC, SessionTCAdmin)

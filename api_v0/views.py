@@ -7,9 +7,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api_v0.utils_views import save_poll_participant, save_poll_all, rating
-from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating
+from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
-    CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer
+    CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer
 
 
 class CheckPermission(APIView):
@@ -54,11 +54,17 @@ class GetListOption(APIView):
         queryset_permission = Permission.objects.all()
         queryset_team = Team.objects.all()
         queryset_country = Country.objects.all()
+        queryset_session = SessionTC.objects.all()
 
         serializer_permission = PermissionSerializer(queryset_permission, many=True).data
         serializer_team = TeamSerializer(queryset_team, many=True).data
         serializer_country = CountrySerializer(queryset_country, many=True).data
-        return Response({'team': serializer_team, 'permission': serializer_permission, 'country': serializer_country})
+        serializer_session = SessionTCSerializer(queryset_session, many=True).data
+
+        return Response({'team': serializer_team,
+                         'permission': serializer_permission,
+                         'country': serializer_country,
+                         'session': serializer_session})
 
 
 class PostCreateUser(APIView):
@@ -79,12 +85,14 @@ class PostCreateUser(APIView):
                 country_id=request.data['country'],
                 team_id=request.data['team'],
                 username_id=request.data['username'],
+                session_id=request.data['session']
             ).save()
             create_permission_for_user = PermissionUser(
                 permission_id=request.data['permission'],
                 username_id=request.data['username']).save()
             create_rating_field = Rating(username_id=request.data['username'],
                                          rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
+
         else:
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
@@ -224,3 +232,4 @@ class MovePolls(APIView):
             poll.datePosting = datetime.datetime.now()
             poll.save()
         return Response(status=status.HTTP_200_OK)
+

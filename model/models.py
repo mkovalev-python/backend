@@ -17,6 +17,7 @@ class Profile(models.Model):
     birthday = models.DateField('Дата рождения', null=False)
     team = models.ForeignKey('Team', on_delete=models.CASCADE, to_field='name', verbose_name='Команда')
     avatar = models.ImageField('Аватар', upload_to='avatar/', default='avatar/josh-d-avatar.jpg')
+    session = models.ForeignKey('SessionTC', on_delete=models.CASCADE, to_field='number_session', null=True)
 
     def __str__(self):
         return str(self.username)
@@ -90,6 +91,7 @@ class Polls(models.Model):
     latePosting = models.BooleanField('Отложная публикация?', default=False)
     datePosting = models.DateTimeField('Дата и время публикации', default=datetime.now())
     in_archive = models.BooleanField('Архивный опрос?', default=False)
+    session = models.ForeignKey('SessionTC', on_delete=models.CASCADE, to_field='number_session', null=True)
 
     def __str__(self):
         return self.title
@@ -115,7 +117,8 @@ class Questions(models.Model):
 
 
 class Rating(models.Model):
-    username = models.OneToOneField(User, on_delete=models.CASCADE, to_field='username', related_name='Пользователь', default=None)
+    username = models.OneToOneField(User, on_delete=models.CASCADE, to_field='username', related_name='Пользователь',
+                                    default=None)
     points = models.IntegerField('Баллы', default=0)
     rating = models.IntegerField('Рейтинг', default=100000)
 
@@ -123,5 +126,21 @@ class Rating(models.Model):
         return self.username.username
 
     class Meta:
-        verbose_name = ' Рейтинг'
+        verbose_name = 'Рейтинг'
         verbose_name_plural = 'Рейтинг'
+
+
+class SessionTC(models.Model):
+    number_session = models.IntegerField('Номер смены', default=0, unique=True)
+    name_session = models.CharField('Название смены', default='Смена не определена', unique=True, max_length=50)
+    date_from_session = models.DateField('Дата начала смены', null=True, blank=True)
+    date_to_session = models.DateField('Дата конца смены', null=True, blank=True)
+    active_session = models.BooleanField('Активная смена', default=False, null=True)
+
+    def __str__(self):
+        return self.name_session
+
+    class Meta:
+        verbose_name = 'Смена'
+        verbose_name_plural = 'Смены'
+        ordering = ['number_session']
