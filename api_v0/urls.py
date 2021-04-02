@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token
 
 from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreateUser, GetUserList, DeleteUser, \
-    CreateNewPoll, GetActivePolls, GetViewPoll, MovePolls, GetLatePolls, GetArchivePolls
+    CreateNewPoll, GetActivePolls, GetViewPoll, MovePolls, GetLatePolls, GetArchivePolls, GetTeam
 
 urlpatterns = [
     path('token/obtain/', obtain_jwt_token),
@@ -19,4 +19,5 @@ urlpatterns = [
     path('move/polls/', MovePolls.as_view()),
     path('get/late/polls/', GetLatePolls.as_view()),
     path('get/archive/polls/', GetArchivePolls.as_view()),
+    path('get/team/', GetTeam.as_view()),
 ]

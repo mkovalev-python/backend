@@ -32,7 +32,7 @@ class GetUserInfo(APIView):
         serializer_user = ProfileSerializer(queryset, many=True).data
         get_permission_name = Permission.objects.filter(slug=request.query_params['permission'])
         serializer_permission = PermissionSerializer(get_permission_name, many=True).data
-
+        status_session = SessionTCSerializer(SessionTC.objects.filter(number_session=serializer_user[0]['session']), many=True).data
         if request.query_params['permission'] == 'Participant':
 
             rating()
@@ -41,7 +41,7 @@ class GetUserInfo(APIView):
             serializer_rating = RatingSerializer(queryset, many=True).data
 
             return Response({'user': serializer_user, 'permission': serializer_permission,
-                             'rating': serializer_rating})
+                             'rating': serializer_rating, 'status_session': status_session})
         else:
             return Response({'user': serializer_user, 'permission': serializer_permission})
 
@@ -233,3 +233,14 @@ class MovePolls(APIView):
             poll.save()
         return Response(status=status.HTTP_200_OK)
 
+
+class GetTeam(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        queryset = Profile.objects.filter(session_id=request.user.profile.session_id,
+                                          team_id=request.user.profile.team_id,
+                                          ).exclude(username=request.user.username)
+        serializer = ProfileSerializer(queryset, many=True).data
+        return Response(serializer)
