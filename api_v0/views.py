@@ -7,7 +7,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from api_v0.utils_views import save_poll_participant, save_poll_all, rating
-from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC
+from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
+    PollsCheck, QuestionsCheck
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
     CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer
 
@@ -32,7 +33,8 @@ class GetUserInfo(APIView):
         serializer_user = ProfileSerializer(queryset, many=True).data
         get_permission_name = Permission.objects.filter(slug=request.query_params['permission'])
         serializer_permission = PermissionSerializer(get_permission_name, many=True).data
-        status_session = SessionTCSerializer(SessionTC.objects.filter(number_session=serializer_user[0]['session']), many=True).data
+        status_session = SessionTCSerializer(SessionTC.objects.filter(number_session=serializer_user[0]['session']),
+                                             many=True).data
         if request.query_params['permission'] == 'Participant':
 
             rating()
@@ -243,4 +245,61 @@ class GetTeam(APIView):
                                           team_id=request.user.profile.team_id,
                                           ).exclude(username=request.user.username)
         serializer = ProfileSerializer(queryset, many=True).data
+
         return Response(serializer)
+
+
+class GetPollTeam(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        active_session = SessionTC.objects.get(active_session=True).number_session
+        active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category='participant')
+        check_poll_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
+                                                         poll_user_id=request.user.id,
+                                                         user_valuer_id=request.query_params['id']).exists()
+        if check_poll_completed:
+            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+        else:
+            serializer = PollsSerializer(active_poll_team).data
+            queryset = Questions.objects.filter(poll_id=active_poll_team.id)
+            list_questions = []
+            i = 0
+            for item in queryset:
+                question = item.question
+                answer = item.answer.split(' ')
+                if item.poll.category != 'participant':
+                    del answer[0]
+                else:
+                    for i in range(int(answer[0])):
+                        if i == 0:
+                            answer.clear()
+                        answer.append(i + 1)
+                i += 1
+                list_questions.append({'question': question, 'answer': answer, 'id': i})
+
+            data = {'poll_info': serializer, 'questions': list_questions}
+
+            return Response(data)
+
+
+class CheckPollTeam(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    @staticmethod
+    def post(request):
+        PollsCheck(poll_id=request.data['id_poll']).save()
+        polls = PollsCheck.objects.get(poll_id=request.data['id_poll'])
+        polls.user_valuer_id = request.data['user_poll_id']
+        polls.save()
+        polls.poll_user_id = request.data['user_id']
+        polls.save()
+        for el in request.data['answers']:
+            get_id_question = Questions.objects.get(question=el).id
+            QuestionsCheck(poll_id=request.data['id_poll'],
+                           user_valuer_id=request.data['user_id'],
+                           answer=request.data['answers'][el],
+                           question_id=get_id_question).save()
+
+        return Response(status=status.HTTP_200_OK)

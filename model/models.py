@@ -105,7 +105,7 @@ class Questions(models.Model):
     """Модель вопросов и ответов"""
 
     poll = models.ForeignKey(Polls, on_delete=models.CASCADE)
-    question = models.CharField('Вопрос', max_length=255)
+    question = models.CharField('Вопрос', max_length=255, unique=False)
     answer = models.CharField('Ответ', max_length=255)
 
     def __str__(self):
@@ -144,3 +144,27 @@ class SessionTC(models.Model):
         verbose_name = 'Смена'
         verbose_name_plural = 'Смены'
         ordering = ['number_session']
+
+
+class PollsCheck(models.Model):
+    user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик', related_name="ids",null=True)
+    poll_user = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Кого оценили', blank=True, null=True)
+    poll = models.ForeignKey(Polls, on_delete=models.CASCADE, verbose_name='Опрос')
+
+    class Meta:
+        verbose_name = 'Пройденный опрос'
+        verbose_name_plural = 'Пройденные опросы'
+
+
+class QuestionsCheck(models.Model):
+    question = models.ForeignKey(Questions, on_delete=models.CASCADE, verbose_name='Вопрос')
+    answer = models.CharField('Ответ', max_length=100)
+    user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик')
+    poll = models.ForeignKey(Polls, on_delete=models.CASCADE, verbose_name='Опрос')
+
+    def __str__(self):
+        return self.question.question
+
+    class Meta:
+        verbose_name = 'Ответ на вопрос'
+        verbose_name_plural = 'Ответы на вопросы'
