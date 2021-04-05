@@ -289,12 +289,9 @@ class CheckPollTeam(APIView):
 
     @staticmethod
     def post(request):
-        PollsCheck(poll_id=request.data['id_poll']).save()
-        polls = PollsCheck.objects.get(poll_id=request.data['id_poll'])
-        polls.user_valuer_id = request.data['user_id']
-        polls.save()
-        polls.poll_user_id = request.data['user_poll_id']
-        polls.save()
+        PollsCheck(poll_id=request.data['id_poll'], user_valuer_id=request.data['user_id'],
+                   poll_user_id=request.data['user_poll_id']).save()
+
         for el in request.data['answers']:
             get_id_question = Questions.objects.get(question=el).id
             QuestionsCheck(poll_id=request.data['id_poll'],
@@ -302,7 +299,8 @@ class CheckPollTeam(APIView):
                            answer=request.data['answers'][el],
                            question_id=get_id_question).save()
 
-        add_points_for_user =Rating.objects.get(username_id=Profile.objects.get(id=request.data['user_id']).username_id)
-        add_points_for_user.points += polls.poll.points
+        add_points_for_user = Rating.objects.get(
+            username_id=Profile.objects.get(id=request.data['user_id']).username_id)
+        add_points_for_user.points += Polls.objects.get(id=request.data['id_poll']).points
         add_points_for_user.save()
         return Response(status=status.HTTP_200_OK)
