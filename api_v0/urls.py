@@ -3,7 +3,7 @@ from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token
 
 from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreateUser, GetUserList, DeleteUser, \
     CreateNewPoll, GetActivePolls, GetViewPoll, MovePolls, GetLatePolls, GetArchivePolls, GetTeam, GetPollTeam, \
-    CheckPollTeam
+    CheckPollTeam, GetPollsParticipant
 
 urlpatterns = [
     path('token/obtain/', obtain_jwt_token),
@@ -23,4 +23,5 @@ urlpatterns = [
     path('get/team/', GetTeam.as_view()),
     path('get/poll/team/', GetPollTeam.as_view()),
     path('check/poll/team/', CheckPollTeam.as_view()),
+    path('get/poll/', GetPollsParticipant.as_view()),
 ]

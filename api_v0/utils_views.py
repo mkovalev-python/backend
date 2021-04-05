@@ -2,7 +2,7 @@ import logging
 
 from rest_framework import status
 
-from model.models import Polls, Questions, Rating
+from model.models import Polls, Questions, Rating, Profile, PollsCheck
 
 
 def save_poll_participant(request):
@@ -66,3 +66,18 @@ def rating():
         user.rating = i
         user.save()
         i += 1
+
+
+def points_my_team(params):
+    team_count = Profile.objects.exclude(id=params['user_id']).filter(
+        team_id=Profile.objects.get(id=params['user_id']).team_id,
+        session_id=Profile.objects.get(id=params['user_id']).session_id)
+    null_users = 0
+    for el in team_count:
+        if PollsCheck.objects.filter(user_valuer_id=el.id, poll_id=params['id_poll']).exists():
+            continue
+        else:
+            null_users += 1
+
+    n_users = team_count.count() - null_users
+
