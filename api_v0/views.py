@@ -257,8 +257,8 @@ class GetPollTeam(APIView):
         active_session = SessionTC.objects.get(active_session=True).number_session
         active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category='participant')
         check_poll_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
-                                                         poll_user_id=request.user.id,
-                                                         user_valuer_id=request.query_params['id']).exists()
+                                                         poll_user_id=request.query_params['id'],
+                                                         user_valuer_id=request.user.id).exists()
         if check_poll_completed:
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
@@ -291,9 +291,9 @@ class CheckPollTeam(APIView):
     def post(request):
         PollsCheck(poll_id=request.data['id_poll']).save()
         polls = PollsCheck.objects.get(poll_id=request.data['id_poll'])
-        polls.user_valuer_id = request.data['user_poll_id']
+        polls.user_valuer_id = request.data['user_id']
         polls.save()
-        polls.poll_user_id = request.data['user_id']
+        polls.poll_user_id = request.data['user_poll_id']
         polls.save()
         for el in request.data['answers']:
             get_id_question = Questions.objects.get(question=el).id
@@ -302,4 +302,7 @@ class CheckPollTeam(APIView):
                            answer=request.data['answers'][el],
                            question_id=get_id_question).save()
 
+        add_points_for_user =Rating.objects.get(username_id=Profile.objects.get(id=request.data['user_id']).username_id)
+        add_points_for_user.points += polls.poll.points
+        add_points_for_user.save()
         return Response(status=status.HTTP_200_OK)
