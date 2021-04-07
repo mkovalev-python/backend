@@ -147,7 +147,8 @@ class SessionTC(models.Model):
 
 
 class PollsCheck(models.Model):
-    user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик', related_name="ids",null=True)
+    user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик', related_name="ids",
+                                    null=True)
     poll_user = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Кого оценили', blank=True, null=True)
     poll = models.ForeignKey(Polls, on_delete=models.CASCADE, verbose_name='Опрос')
 
@@ -161,6 +162,8 @@ class QuestionsCheck(models.Model):
     answer = models.CharField('Ответ', max_length=100)
     user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик')
     poll = models.ForeignKey(Polls, on_delete=models.CASCADE, verbose_name='Опрос')
+    poll_check = models.ForeignKey(PollsCheck, on_delete=models.CASCADE, default=None,
+                                      verbose_name='ID пройденного опроса')
 
     def __str__(self):
         return self.question.question

@@ -6,7 +6,7 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api_v0.utils_views import save_poll_participant, save_poll_all, rating, points_my_team, save_poll
+from api_v0.utils_views import save_poll_participant, save_poll_all, rating, points_my_team, save_poll, get_points
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
     PollsCheck, QuestionsCheck
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
@@ -219,6 +219,8 @@ class MovePolls(APIView):
     def post(request):
         poll = Polls.objects.get(id=request.data['id'])
         if request.data['type'] == 'archive':
+            if poll.category == 'participant' and poll.latePosting == False:
+                get_points(poll)
             poll.in_archive = True
             poll.save()
         if request.data['type'] == 'delete':
@@ -266,7 +268,8 @@ class GetPollTeam(APIView):
                                                              poll_user_id=request.query_params['id'],
                                                              user_valuer_id=request.user.profile.id).exists()
         else:
-            active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category=category,id=request.query_params['id'])
+            active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category=category,
+                                                 id=request.query_params['id'])
             check_poll_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
                                                              user_valuer_id=request.user.profile.id).exists()
         if check_poll_completed:
@@ -282,10 +285,10 @@ class GetPollTeam(APIView):
                 if item.poll.category != 'participant':
                     del answer[0]
                 else:
-                    for i in range(int(answer[0])):
+                    for i in range(int(answer[0])+1):
                         if i == 0:
                             answer.clear()
-                        answer.append(i + 1)
+                        answer.append(i)
                 i += 1
                 list_questions.append({'question': question, 'answer': answer, 'id': i})
 
@@ -304,15 +307,17 @@ class CheckPollTeam(APIView):
             save_poll(request.data)
             return Response(status=status.HTTP_200_OK)
         else:
-            PollsCheck(poll_id=request.data['id_poll'], user_valuer_id=request.data['user_id'],
-                       poll_user_id=request.data['user_poll_id']).save()
+            poll = PollsCheck(poll_id=request.data['id_poll'], user_valuer_id=request.data['user_id'],
+                              poll_user_id=request.data['user_poll_id'])
+            poll.save()
 
             for el in request.data['answers']:
                 get_id_question = Questions.objects.get(question=el).id
                 QuestionsCheck(poll_id=request.data['id_poll'],
                                user_valuer_id=request.data['user_id'],
                                answer=request.data['answers'][el],
-                               question_id=get_id_question).save()
+                               question_id=get_id_question,
+                               poll_check_id=poll.id).save()
 
             add_points_for_user = Rating.objects.get(
                 username_id=Profile.objects.get(id=request.data['user_id']).username_id)
@@ -330,6 +335,7 @@ class GetPollsParticipant(APIView):
         user_id = request.user.profile.id
         get_check_polls = PollsCheck.objects.filter(user_valuer_id=user_id)
         get_all_polls = Polls.objects.exclude(category='participant')
+        get_all_polls = get_all_polls.exclude(session_id=0)
         for el in get_check_polls:
             get_all_polls = get_all_polls.exclude(id=el.poll_id)
 

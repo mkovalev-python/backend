@@ -2,7 +2,7 @@ import logging
 
 from rest_framework import status
 
-from model.models import Polls, Questions, Rating, Profile, PollsCheck, QuestionsCheck
+from model.models import Polls, Questions, Rating, Profile, PollsCheck, QuestionsCheck, Team
 
 
 def save_poll_participant(request):
@@ -68,18 +68,22 @@ def rating():
         i += 1
 
 
-def points_my_team(params):
-    team_count = Profile.objects.exclude(id=params['user_id']).filter(
-        team_id=Profile.objects.get(id=params['user_id']).team_id,
-        session_id=Profile.objects.get(id=params['user_id']).session_id)
+def points_my_team(team, poll, s_points, user):
+    team_count = Profile.objects.exclude(username_id=user.username_id).filter(team_id=team, session_id=poll.session_id)
     null_users = 0
     for el in team_count:
-        if PollsCheck.objects.filter(user_valuer_id=el.id, poll_id=params['id_poll']).exists():
+        if PollsCheck.objects.filter(user_valuer_id=el.id, poll_id=poll.id, poll_user_id=user.id).exists():
             continue
         else:
             null_users += 1
 
     n_users = team_count.count() - null_users
+
+    points = int(s_points/n_users)
+
+    save_points = Rating.objects.get(username_id=user.username_id)
+    save_points.points += points
+    save_points.save()
 
 
 def save_poll(params):
@@ -96,4 +100,22 @@ def save_poll(params):
         username_id=Profile.objects.get(id=params['user_id']).username_id)
     add_points_for_user.points += Polls.objects.get(id=params['id_poll']).points
     add_points_for_user.save()
+
+
+def get_points(poll):
+    get_team_id = Team.objects.exclude(name='Staff')
+
+    for team in get_team_id:
+        for user in Profile.objects.filter(team_id=team):
+            bool_polls = PollsCheck.objects.filter(poll_user_id=user.id).exists()
+            if bool_polls:
+                get_all_check_polls_for_user = PollsCheck.objects.filter(poll_id=poll.id,poll_user_id=user.id)
+                summ_points = 0
+                for polls in get_all_check_polls_for_user:
+                    get_all_questions_check = QuestionsCheck.objects.filter(poll_check_id=polls.id)
+                    for answer in get_all_questions_check:
+                        summ_points += int(answer.answer)
+                points_my_team(team, poll, summ_points, user)
+            else:
+                continue
 
