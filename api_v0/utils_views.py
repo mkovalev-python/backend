@@ -1,8 +1,8 @@
-import logging
+from datetime import datetime
 
 from rest_framework import status
 
-from model.models import Polls, Questions, Rating, Profile, PollsCheck, QuestionsCheck, Team
+from model.models import Polls, Questions, Rating, Profile, PollsCheck, QuestionsCheck, Team, LogPoint
 
 
 def save_poll_participant(request):
@@ -79,11 +79,12 @@ def points_my_team(team, poll, s_points, user):
 
     n_users = team_count.count() - null_users
 
-    points = int(s_points/n_users)
+    points = int(s_points / n_users)
 
     save_points = Rating.objects.get(username_id=user.username_id)
     save_points.points += points
     save_points.save()
+    log_point(points, poll.id, user.id, True)
 
 
 def save_poll(params):
@@ -102,6 +103,7 @@ def save_poll(params):
         username_id=Profile.objects.get(id=params['user_id']).username_id)
     add_points_for_user.points += Polls.objects.get(id=params['id_poll']).points
     add_points_for_user.save()
+    log_point(Polls.objects.get(id=params['id_poll']).points, params['id_poll'], params['user_id'], True)
 
 
 def get_points(poll):
@@ -111,7 +113,7 @@ def get_points(poll):
         for user in Profile.objects.filter(team_id=team):
             bool_polls = PollsCheck.objects.filter(poll_user_id=user.id).exists()
             if bool_polls:
-                get_all_check_polls_for_user = PollsCheck.objects.filter(poll_id=poll.id,poll_user_id=user.id)
+                get_all_check_polls_for_user = PollsCheck.objects.filter(poll_id=poll.id, poll_user_id=user.id)
                 summ_points = 0
                 for polls in get_all_check_polls_for_user:
                     get_all_questions_check = QuestionsCheck.objects.filter(poll_check_id=polls.id)
@@ -121,3 +123,20 @@ def get_points(poll):
             else:
                 continue
 
+
+def add_points(req, poll):
+    get_user = Profile.objects.get(id=req.data['user_id'])
+    team_count = Profile.objects.exclude(username_id=get_user.username_id).filter(team_id=get_user.team_id).count()
+    cheking_pollscheck = PollsCheck.objects.filter(user_valuer_id=get_user.id, poll_id=poll.poll_id).count()
+    if team_count == cheking_pollscheck:
+        add_p = Rating.objects.get(username_id=get_user.username_id)
+        add_p.points += poll.poll.points
+        add_p.save()
+        log_point(poll.poll.points, poll.poll.id, get_user.id, True)
+
+
+def log_point(points, poll_id, user_id, bool_add):
+    """Функция логгирования баллов"""
+
+    LogPoint(points=points, date=datetime.now(), add=bool_add, poll_id=poll_id, username_id=user_id).save()
+    return print('Баллы залогированы')

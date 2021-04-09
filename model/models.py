@@ -163,7 +163,7 @@ class QuestionsCheck(models.Model):
     user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик')
     poll = models.ForeignKey(Polls, on_delete=models.CASCADE, verbose_name='Опрос')
     poll_check = models.ForeignKey(PollsCheck, on_delete=models.CASCADE, default=None,
-                                      verbose_name='ID пройденного опроса')
+                                   verbose_name='ID пройденного опроса')
 
     def __str__(self):
         return self.question.question
@@ -171,3 +171,18 @@ class QuestionsCheck(models.Model):
     class Meta:
         verbose_name = 'Ответ на вопрос'
         verbose_name_plural = 'Ответы на вопросы'
+
+
+class LogPoint(models.Model):
+    username = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Пользователь')
+    points = models.IntegerField('Баллы', default=0)
+    date = models.DateTimeField('Дата зачисления')
+    poll = models.ForeignKey(Polls, on_delete=models.CASCADE, verbose_name='Опрос')
+    add = models.BooleanField('Зачисление', null=True)
+
+    def __str__(self):
+        return self.username.username_id
+
+    class Meta:
+        verbose_name = 'Логи зачисления баллов'
+        verbose_name_plural = 'Логи зачисления баллов'

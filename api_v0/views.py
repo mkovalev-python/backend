@@ -6,9 +6,10 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from api_v0.utils_views import save_poll_participant, save_poll_all, rating, points_my_team, save_poll, get_points
+from api_v0.utils_views import save_poll_participant, save_poll_all, rating, points_my_team, save_poll, get_points, \
+    add_points
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
-    PollsCheck, QuestionsCheck
+    PollsCheck, QuestionsCheck, LogPoint
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
     CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer
 
@@ -285,7 +286,7 @@ class GetPollTeam(APIView):
                 if item.poll.category != 'participant':
                     del answer[0]
                 else:
-                    for i in range(int(answer[0])+1):
+                    for i in range(int(answer[0]) + 1):
                         if i == 0:
                             answer.clear()
                         answer.append(i)
@@ -319,10 +320,7 @@ class CheckPollTeam(APIView):
                                question_id=get_id_question,
                                poll_check_id=poll.id).save()
 
-            add_points_for_user = Rating.objects.get(
-                username_id=Profile.objects.get(id=request.data['user_id']).username_id)
-            add_points_for_user.points += Polls.objects.get(id=request.data['id_poll']).points
-            add_points_for_user.save()
+            add_points(request, poll)
 
             return Response(status=status.HTTP_200_OK)
 
@@ -351,4 +349,26 @@ class GetPollsParticipant(APIView):
             else:
                 data[i] = serializer
 
+        return Response(data)
+
+
+class GetAnalytics(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        """Получение данных по логгера"""
+        logger = LogPoint.objects.all()
+
+        for log in logger:
+            user = Profile.objects.get(id=log.username_id)
+
+            log_data = {
+                'name': user.first_name + ' ' + user.last_name,
+                'points': log.points,
+                'date': log.date,
+                'type': log.add
+            }
+
+        data = {'logger': log_data, 'rating': 2}
         return Response(data)
