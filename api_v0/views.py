@@ -1,17 +1,24 @@
 import datetime
-
+import os
+from django.http import FileResponse
+from django.core import serializers
 from django.contrib.auth.models import User
 from rest_framework import permissions, status
-
+from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
+from django.shortcuts import render
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage
 from api_v0.utils_views import save_poll_participant, save_poll_all, rating, points_my_team, save_poll, get_points, \
     add_points
+from backend.settings import MEDIA_ROOT
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
     PollsCheck, QuestionsCheck, LogPoint
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
-    CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer
+    CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer, \
+    LogPointSerializer, QuestionsSerializer, QuestionsCheckSerializer
+import pandas as pd
 
 
 class CheckPermission(APIView):
@@ -342,7 +349,7 @@ class GetPollsParticipant(APIView):
         data = dict.fromkeys(list_category)
         for i in list_category:
 
-            polls = get_all_polls.filter(category=i)
+            polls = get_all_polls.filter(category=i, session_id=Profile.objects.get(id=user_id).session_id)
             serializer = PollsSerializer(polls, many=True).data
             if polls.count() == 0:
                 continue
@@ -359,16 +366,78 @@ class GetAnalytics(APIView):
     def get(request):
         """Получение данных по логгера"""
         logger = LogPoint.objects.all()
+        logger_list = []
+        if logger.count() != 0:
+            for log in logger:
 
-        for log in logger:
-            user = Profile.objects.get(id=log.username_id)
+                log_data = {
+                    'name': log.username,
+                    'points': log.points,
+                    'date': log.date.strftime('%d/%m/%Y %H:%M:%S'),
+                    'poll': log.poll
+                }
+                logger_list.append(log_data)
 
-            log_data = {
-                'name': user.first_name + ' ' + user.last_name,
-                'points': log.points,
-                'date': log.date,
-                'type': log.add
-            }
+        """Получение данных по рейтингу участников"""
+        rating = Rating.objects.all()
+        rating_list = []
+        for el in rating:
+            user = Profile.objects.get(username=el.username).first_name + ' ' + \
+                   Profile.objects.get(username=el.username).last_name
 
-        data = {'logger': log_data, 'rating': 2}
+            data = {'rating': el.rating, 'points': el.points, 'user': user}
+
+            rating_list.append(data)
+
+        """Получение пройденных опросов и ответов"""
+        serializer_user = ProfileSerializer(Profile.objects.all().exclude(team_id='Staff'), many=True).data
+        i = 0
+        for el_user in serializer_user:
+            el_user['key'] = i
+            j = 100000
+            for el_poll in el_user['children']:
+                serializer_questions = QuestionsSerializer(Questions.objects.filter(poll_id=el_poll['poll']), many=True).data
+                el_poll['children'] = serializer_questions
+                id_poll = el_poll['poll']
+                el_poll['key'] = j
+                el_poll['poll'] = Polls.objects.get(id=el_poll['poll']).title
+                ij = 10000000
+                for el_questions in el_poll['children']:
+                    el_questions['key'] = ij
+                    el_questions['answer'] = ''
+                    serializer_answers = QuestionsCheckSerializer(QuestionsCheck.objects.filter(poll_id=id_poll, user_valuer_id=el_poll['user_valuer']), many=True).data
+                    for el_answers in serializer_answers:
+                        el_answers['question'] = ''
+                        el_answers['poll'] = ''
+                    el_questions['children'] = serializer_answers
+                    el_questions['poll'] = ''
+                    ij += 1
+                j += 1
+
+            i += 1
+        data = {'logger': logger_list, 'rating': rating_list, 'user': serializer_user}
         return Response(data)
+
+
+class GetExcel(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        """Скачивание файла из аналитики"""
+        global file
+        serializer = []
+        if request.query_params['type'] == 'excel_log':
+            queryset = LogPoint.objects.all()
+            serializer = LogPointSerializer(queryset, many=True).data
+            file = 'LoggerPoint_'
+        if request.query_params['type'] == 'excel_rating':
+            file = 'Rating_'
+            queryset = Rating.objects.all()
+            serializer = RatingSerializer(queryset, many=True).data
+
+        df = pd.DataFrame(serializer)
+        name = file + datetime.datetime.now().strftime("%d-%m-%Y %H:%M") + '.xlsx'
+        df.to_excel(MEDIA_ROOT + '/file_excel/' + name)
+
+        return Response({'url': '/images/media/file_excel/' + name})

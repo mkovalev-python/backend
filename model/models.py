@@ -174,15 +174,16 @@ class QuestionsCheck(models.Model):
 
 
 class LogPoint(models.Model):
-    username = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Пользователь')
+    username = models.CharField('Пользователь', max_length=255)
     points = models.IntegerField('Баллы', default=0)
     date = models.DateTimeField('Дата зачисления')
-    poll = models.ForeignKey(Polls, on_delete=models.CASCADE, verbose_name='Опрос')
+    poll = models.CharField('Опрос', max_length=255)
     add = models.BooleanField('Зачисление', null=True)
 
     def __str__(self):
-        return self.username.username_id
+        return '%s %s %s' % (self.username, self.points, self.date)
 
     class Meta:
         verbose_name = 'Логи зачисления баллов'
         verbose_name_plural = 'Логи зачисления баллов'
+        ordering = ['-date']

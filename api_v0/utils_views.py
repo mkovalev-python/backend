@@ -138,5 +138,10 @@ def add_points(req, poll):
 def log_point(points, poll_id, user_id, bool_add):
     """Функция логгирования баллов"""
 
-    LogPoint(points=points, date=datetime.now(), add=bool_add, poll_id=poll_id, username_id=user_id).save()
+    user = Profile.objects.get(id=user_id)
+    poll = Polls.objects.get(id=poll_id).title
+
+    LogPoint(points=points, date=datetime.now(), add=bool_add, poll=poll, username=user.first_name
+                                                                                         + ' ' +
+                                                                                         user.last_name).save()
     return print('Баллы залогированы')

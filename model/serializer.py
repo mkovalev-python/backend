@@ -2,15 +2,23 @@ from django.contrib.auth.models import User
 from rest_framework import serializers
 from rest_framework.settings import api_settings
 
-from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC
+from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
+    LogPoint, PollsCheck, QuestionsCheck
 
 
 class ProfileSerializer(serializers.ModelSerializer):
     """Сериалайзер информации пользователя"""
 
+    children = serializers.SerializerMethodField()
+
     class Meta:
         model = Profile
         fields = '__all__'
+
+    @staticmethod
+    def get_children(obj):
+        return PollsCheckSerializer(PollsCheck.objects.filter(user_valuer_id=obj.id),
+                                    many=True).data
 
 
 class PermissionUserSerializer(serializers.ModelSerializer):
@@ -90,9 +98,16 @@ class QuestionsSerializer(serializers.ModelSerializer):
 class RatingSerializer(serializers.ModelSerializer):
     """Сериалайзер рейтинга"""
 
+    user = serializers.SerializerMethodField()
+
     class Meta:
         model = Rating
-        fields = '__all__'
+        fields = ['rating', 'user', 'points']
+
+    @staticmethod
+    def get_user(obj):
+        user = Profile.objects.get(username=obj.username)
+        return user.first_name + ' ' + user.last_name
 
 
 class SessionTCSerializer(serializers.ModelSerializer):
@@ -100,4 +115,28 @@ class SessionTCSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SessionTC
+        fields = '__all__'
+
+
+class LogPointSerializer(serializers.ModelSerializer):
+    """Сериалайзер логов по баллам"""
+
+    class Meta:
+        model = LogPoint
+        fields = ['username', 'points', 'poll', 'date']
+
+
+class PollsCheckSerializer(serializers.ModelSerializer):
+    """Сериалайзер пройденных опросов"""
+
+    class Meta:
+        model = PollsCheck
+        fields = '__all__'
+
+
+class QuestionsCheckSerializer(serializers.ModelSerializer):
+    """Сериалайзер пройденных вопросов"""
+
+    class Meta:
+        model = QuestionsCheck
         fields = '__all__'
