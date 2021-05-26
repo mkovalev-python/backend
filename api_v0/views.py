@@ -1,5 +1,12 @@
 import datetime
 import os
+import random
+import smtplib
+import ssl
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+import pandas
 from django.http import FileResponse
 from django.core import serializers
 from django.contrib.auth.models import User
@@ -14,10 +21,10 @@ from api_v0.utils_views import save_poll_participant, save_poll_all, rating, poi
     add_points
 from backend.settings import MEDIA_ROOT
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
-    PollsCheck, QuestionsCheck, LogPoint
+    PollsCheck, QuestionsCheck, LogPoint, FileUpload, RatingTeam
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
     CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer, \
-    LogPointSerializer, QuestionsSerializer, QuestionsCheckSerializer
+    LogPointSerializer, QuestionsSerializer, QuestionsCheckSerializer, RatingTeamSerializer
 import pandas as pd
 
 
@@ -50,8 +57,12 @@ class GetUserInfo(APIView):
             queryset = Rating.objects.filter(username=request.user.username)
             serializer_rating = RatingSerializer(queryset, many=True).data
 
+            queryset = RatingTeam.objects.get(team_id=request.user.profile.team_id,
+                                                                   session_id=request.user.profile.session_id)
+            serializer_rating_team = RatingTeamSerializer(queryset, many=False).data
             return Response({'user': serializer_user, 'permission': serializer_permission,
-                             'rating': serializer_rating, 'status_session': status_session})
+                             'rating': serializer_rating,'status_session': status_session,
+                             'rating_team': serializer_rating_team })
         else:
             return Response({'user': serializer_user, 'permission': serializer_permission})
 
@@ -369,7 +380,6 @@ class GetAnalytics(APIView):
         logger_list = []
         if logger.count() != 0:
             for log in logger:
-
                 log_data = {
                     'name': log.username,
                     'points': log.points,
@@ -396,7 +406,8 @@ class GetAnalytics(APIView):
             el_user['key'] = i
             j = 100000
             for el_poll in el_user['children']:
-                serializer_questions = QuestionsSerializer(Questions.objects.filter(poll_id=el_poll['poll']), many=True).data
+                serializer_questions = QuestionsSerializer(Questions.objects.filter(poll_id=el_poll['poll']),
+                                                           many=True).data
                 el_poll['children'] = serializer_questions
                 id_poll = el_poll['poll']
                 el_poll['key'] = j
@@ -405,7 +416,9 @@ class GetAnalytics(APIView):
                 for el_questions in el_poll['children']:
                     el_questions['key'] = ij
                     el_questions['answer'] = ''
-                    serializer_answers = QuestionsCheckSerializer(QuestionsCheck.objects.filter(poll_id=id_poll, user_valuer_id=el_poll['user_valuer']), many=True).data
+                    serializer_answers = QuestionsCheckSerializer(
+                        QuestionsCheck.objects.filter(poll_id=id_poll, user_valuer_id=el_poll['user_valuer']),
+                        many=True).data
                     for el_answers in serializer_answers:
                         el_answers['question'] = ''
                         el_answers['poll'] = ''
@@ -441,3 +454,78 @@ class GetExcel(APIView):
         df.to_excel(MEDIA_ROOT + '/file_excel/' + name)
 
         return Response({'url': '/images/media/file_excel/' + name})
+
+
+class UploadUser(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        """Получаем файл для загрузки из бд(Берется последний загруженный файл)"""
+        file = FileUpload.objects.all().order_by('-id')[:1][0]
+        exel_data_df = pandas.read_excel(file.file.path)
+        for index, row in exel_data_df.iterrows():
+
+            password = ''
+            for x in range(8):
+                password = password + random.choice(
+                    list('1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'))
+
+            serializer = UserSerializerWithToken(
+                data={'username': row['email'].split('@')[0], 'password': password})
+
+            if serializer.is_valid():
+                serializer.save()
+                create_info_for_user = Profile(
+                    first_name=row['Имя'],
+                    last_name=row['Фамилия'],
+                    country_id=row['Город'],
+                    team_id=row['Команда'],
+                    birthday='2021-05-01',
+                    username_id=row['email'].split('@')[0],
+                    session_id=row['Смена']
+                ).save()
+                create_permission_for_user = PermissionUser(
+                    permission_id='Participant',
+                    username_id=row['email'].split('@')[0]).save()
+                create_rating_field = Rating(username_id=row['email'].split('@')[0],
+                                             rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
+
+            """Отправка письма с данными для входа"""
+
+            message = MIMEMultipart()
+            message['Subject'] = 'Параметры для входа в систему опросов ТС'
+            message['From'] = 'mkovalev@hse.ru'
+            message['To'] = row['email']
+
+            html = """\
+                    <html>
+                        <head></head>
+                        <body>
+                        <h4>Здравствуйте! Вы были зарегистрированы в системе опросов форума "Территория Смыслов".</h4>
+                        
+                        <span><b>Login:</b>  """ + row['email'].split('@')[0] + """</span><br>
+                        <span><b>Password:</b>  """ + password + """</span></body></html>"""
+
+            text = MIMEText(html, 'html')
+            message.attach(text)
+
+            port = 587
+            smtp_server = "smtp.hse.ru"
+
+            context = ssl.create_default_context()
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+
+            with smtplib.SMTP(smtp_server,port) as server:
+                server.ehlo()
+                server.starttls(context=context)
+                server.ehlo()
+                try:
+                    server.login('mkovalev', '!N7DU935')
+                    server.sendmail(message['From'],message['To'], message.as_string())
+                    server.quit()
+                except:
+                    return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        return Response(status=status.HTTP_202_ACCEPTED)

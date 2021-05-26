@@ -2,7 +2,7 @@ from datetime import datetime
 
 from rest_framework import status
 
-from model.models import Polls, Questions, Rating, Profile, PollsCheck, QuestionsCheck, Team, LogPoint
+from model.models import Polls, Questions, Rating, Profile, PollsCheck, QuestionsCheck, Team, LogPoint, RatingTeam
 
 
 def save_poll_participant(request):
@@ -59,10 +59,18 @@ def save_question_and_answer(request, answer, question):
 
 def rating():
     sort_table = Rating.objects.order_by('-points')
+    sort_table_team = RatingTeam.objects.order_by('-points')
 
     i = 1
 
     for user in sort_table:
+        user.rating = i
+        user.save()
+        i += 1
+
+    i = 1
+
+    for user in sort_table_team:
         user.rating = i
         user.save()
         i += 1
@@ -104,6 +112,11 @@ def save_poll(params):
     add_points_for_user.points += Polls.objects.get(id=params['id_poll']).points
     add_points_for_user.save()
     log_point(Polls.objects.get(id=params['id_poll']).points, params['id_poll'], params['user_id'], True)
+    """Формирование рейтинга команды"""
+    get_user = Profile.objects.get(id=params['user_id'])
+    add_point_team = RatingTeam.objects.get(team_id=get_user.team_id, session_id=get_user.session_id)
+    add_point_team.points += poll.poll.points
+    add_point_team.save()
 
 
 def get_points(poll):
@@ -133,7 +146,10 @@ def add_points(req, poll):
         add_p.points += poll.poll.points
         add_p.save()
         log_point(poll.poll.points, poll.poll.id, get_user.id, True)
-
+        """Формирование рейтинга команды"""
+        add_point_team = RatingTeam.objects.get(team_id=get_user.team_id, session_id=get_user.session_id)
+        add_point_team.points += poll.poll.points
+        add_point_team.save()
 
 def log_point(points, poll_id, user_id, bool_add):
     """Функция логгирования баллов"""

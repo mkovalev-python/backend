@@ -130,6 +130,21 @@ class Rating(models.Model):
         verbose_name_plural = 'Рейтинг'
 
 
+class RatingTeam(models.Model):
+    team = models.ForeignKey(Team, on_delete=models.CASCADE, to_field='name', default=None, related_name='Команда')
+    session = models.ForeignKey("SessionTC", on_delete=models.CASCADE, to_field='number_session', default=None,
+                                related_name='Сессия')
+    points = models.IntegerField('Баллы', default=0)
+    rating = models.IntegerField('Рейтинг', default=100000)
+
+    def __str__(self):
+        return self.team.name
+
+    class Meta:
+        verbose_name = 'Рейтинг команды'
+        verbose_name_plural = 'Рейтинг команды'
+
+
 class SessionTC(models.Model):
     number_session = models.IntegerField('Номер смены', default=0, unique=True)
     name_session = models.CharField('Название смены', default='Смена не определена', unique=True, max_length=50)
@@ -187,3 +202,7 @@ class LogPoint(models.Model):
         verbose_name = 'Логи зачисления баллов'
         verbose_name_plural = 'Логи зачисления баллов'
         ordering = ['-date']
+
+
+class FileUpload(models.Model):
+    file = models.FileField(upload_to='fileUpload/')
