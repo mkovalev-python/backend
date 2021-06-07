@@ -3,7 +3,7 @@ from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token
 from django.conf.urls.static import static
 from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreateUser, GetUserList, DeleteUser, \
     CreateNewPoll, GetActivePolls, GetViewPoll, MovePolls, GetLatePolls, GetArchivePolls, GetTeam, GetPollTeam, \
-    CheckPollTeam, GetPollsParticipant, GetAnalytics, GetExcel,UploadUser
+    CheckPollTeam, GetPollsParticipant, GetAnalytics, GetExcel,UploadUser, GetTableRating, GetTableRatingTeam
 from backend import settings
 
 urlpatterns = [
@@ -26,6 +26,8 @@ urlpatterns = [
     path('check/poll/team/', CheckPollTeam.as_view()),
     path('get/poll/', GetPollsParticipant.as_view()),
     path('get/analytics/', GetAnalytics.as_view()),
+    path('get/table_rating/', GetTableRating.as_view()),
+    path('get/table_rating_team/', GetTableRatingTeam.as_view()),
     path('get/excel/', GetExcel.as_view()),
     path('upload_user/', UploadUser.as_view())
 ]

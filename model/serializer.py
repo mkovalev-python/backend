@@ -99,15 +99,25 @@ class RatingSerializer(serializers.ModelSerializer):
     """Сериалайзер рейтинга"""
 
     user = serializers.SerializerMethodField()
+    team = serializers.SerializerMethodField()
+    session = serializers.SerializerMethodField()
 
     class Meta:
         model = Rating
-        fields = ['rating', 'user', 'points']
+        fields = ['rating', 'user', 'points', 'team', 'session']
 
     @staticmethod
     def get_user(obj):
         user = Profile.objects.get(username=obj.username)
         return user.first_name + ' ' + user.last_name
+    @staticmethod
+    def get_team(obj):
+        user = Profile.objects.get(username=obj.username)
+        return user.team_id
+    @staticmethod
+    def get_session(obj):
+        user = Profile.objects.get(username=obj.username)
+        return user.session.number_session
 
 
 class SessionTCSerializer(serializers.ModelSerializer):

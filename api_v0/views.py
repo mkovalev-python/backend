@@ -395,7 +395,7 @@ class GetAnalytics(APIView):
             user = Profile.objects.get(username=el.username).first_name + ' ' + \
                    Profile.objects.get(username=el.username).last_name
 
-            data = {'rating': el.rating, 'points': el.points, 'user': user}
+            data = {'rating': el.rating, 'points': el.points, 'user': user, 'team': el.username.profile.team_id, 'session': el.username.profile.session.number_session}
 
             rating_list.append(data)
 
@@ -431,6 +431,51 @@ class GetAnalytics(APIView):
         data = {'logger': logger_list, 'rating': rating_list, 'user': serializer_user}
         return Response(data)
 
+
+class GetTableRating(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        """Получение данных по рейтингу участников"""
+        rating = Rating.objects.all()
+        rating_list = []
+        i = 1
+        for el in rating:
+
+            if int(request.query_params.__getitem__('session')) == el.username.profile.session.number_session:
+                user = Profile.objects.get(username=el.username).first_name + ' ' + \
+                       Profile.objects.get(username=el.username).last_name
+
+                data = {'rating': i, 'points': el.points, 'user': user, 'team': el.username.profile.team_id}
+
+                rating_list.append(data)
+                i += 1
+        data = {'rating': rating_list}
+
+        return Response(data)
+
+
+class GetTableRatingTeam(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        """Получение данных по рейтингу команд"""
+        all_users = Rating.objects.all()
+        rating_list = []
+        i = 1
+        for el in all_users:
+            if el.username.profile.session_id == int(request.query_params.__getitem__('session')):
+                if el.username.profile.team_id == 'TEAM ' + request.query_params.__getitem__('team'):
+                    user = Profile.objects.get(username=el.username).first_name + ' ' + \
+                           Profile.objects.get(username=el.username).last_name
+                    data = {'rating': i, 'points': el.points,'user': user}
+                    rating_list.append(data)
+                    i += 1
+
+        data = {'rating': rating_list}
+        return Response(data)
 
 class GetExcel(APIView):
     permission_classes = (permissions.IsAuthenticated,)
