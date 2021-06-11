@@ -467,7 +467,7 @@ class GetTableRatingTeam(APIView):
         i = 1
         for el in all_users:
             if el.username.profile.session_id == int(request.query_params.__getitem__('session')):
-                if el.username.profile.team_id == 'TEAM ' + request.query_params.__getitem__('team'):
+                if el.username.profile.team_id == 'Веселые ребята':
                     user = Profile.objects.get(username=el.username).first_name + ' ' + \
                            Profile.objects.get(username=el.username).last_name
                     data = {'rating': i, 'points': el.points,'user': user}
