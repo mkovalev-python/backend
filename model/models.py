@@ -206,3 +206,27 @@ class LogPoint(models.Model):
 
 class FileUpload(models.Model):
     file = models.FileField(upload_to='fileUpload/')
+
+
+class Test(models.Model):
+    title = models.CharField('Заголовок теста', null=False, max_length=255)
+    description = models.TextField('Описание теста')
+    points = models.IntegerField('Баллы за прохождение')
+    session = models.ForeignKey(SessionTC, on_delete=models.CASCADE, related_name='Смена', to_field='number_session')
+    num_comp = models.ForeignKey('NumComp', on_delete=models.CASCADE, related_name='Компетенция', to_field='number')
+    latePosting = models.BooleanField('Отложная публикация?', default=False)
+
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        verbose_name = 'Тест'
+        verbose_name_plural = 'Тесты'
+
+
+class NumComp(models.Model):
+    number = models.IntegerField('Номер компетенции', unique=True)
+
+    def __str__(self):
+        return str(self.number)

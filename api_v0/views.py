@@ -21,7 +21,7 @@ from api_v0.utils_views import save_poll_participant, save_poll_all, rating, poi
     add_points
 from backend.settings import MEDIA_ROOT
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
-    PollsCheck, QuestionsCheck, LogPoint, FileUpload, RatingTeam
+    PollsCheck, QuestionsCheck, LogPoint, FileUpload, RatingTeam, Test
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
     CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer, \
     LogPointSerializer, QuestionsSerializer, QuestionsCheckSerializer, RatingTeamSerializer
@@ -58,11 +58,11 @@ class GetUserInfo(APIView):
             serializer_rating = RatingSerializer(queryset, many=True).data
 
             queryset = RatingTeam.objects.get(team_id=request.user.profile.team_id,
-                                                                   session_id=request.user.profile.session_id)
+                                              session_id=request.user.profile.session_id)
             serializer_rating_team = RatingTeamSerializer(queryset, many=False).data
             return Response({'user': serializer_user, 'permission': serializer_permission,
-                             'rating': serializer_rating,'status_session': status_session,
-                             'rating_team': serializer_rating_team })
+                             'rating': serializer_rating, 'status_session': status_session,
+                             'rating_team': serializer_rating_team})
         else:
             return Response({'user': serializer_user, 'permission': serializer_permission})
 
@@ -395,7 +395,8 @@ class GetAnalytics(APIView):
             user = Profile.objects.get(username=el.username).first_name + ' ' + \
                    Profile.objects.get(username=el.username).last_name
 
-            data = {'rating': el.rating, 'points': el.points, 'user': user, 'team': el.username.profile.team_id, 'session': el.username.profile.session.number_session}
+            data = {'rating': el.rating, 'points': el.points, 'user': user, 'team': el.username.profile.team_id,
+                    'session': el.username.profile.session.number_session}
 
             rating_list.append(data)
 
@@ -470,12 +471,13 @@ class GetTableRatingTeam(APIView):
                 if el.username.profile.team_id == 'Веселые ребята':
                     user = Profile.objects.get(username=el.username).first_name + ' ' + \
                            Profile.objects.get(username=el.username).last_name
-                    data = {'rating': i, 'points': el.points,'user': user}
+                    data = {'rating': i, 'points': el.points, 'user': user}
                     rating_list.append(data)
                     i += 1
 
         data = {'rating': rating_list}
         return Response(data)
+
 
 class GetExcel(APIView):
     permission_classes = (permissions.IsAuthenticated,)
@@ -562,15 +564,29 @@ class UploadUser(APIView):
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
 
-            with smtplib.SMTP(smtp_server,port) as server:
+            with smtplib.SMTP(smtp_server, port) as server:
                 server.ehlo()
                 server.starttls(context=context)
                 server.ehlo()
                 try:
                     server.login('mkovalev', '!N7DU935')
-                    server.sendmail(message['From'],message['To'], message.as_string())
+                    server.sendmail(message['From'], message['To'], message.as_string())
                     server.quit()
                 except:
                     return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
         return Response(status=status.HTTP_202_ACCEPTED)
+
+
+class CreateTest(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    @staticmethod
+    def post(request):
+        Test(title=request.data['values']['name'],
+             description=request.data['values']['description'],
+             points=request.data['values']['points'],
+             session_id=request.data['values']['session'],
+             num_comp_id=int(request.data['values']['numComp'])).save()
+
+        return Response(status=status.HTTP_201_CREATED)
