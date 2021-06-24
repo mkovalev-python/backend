@@ -330,10 +330,17 @@ class GetPollTeam(APIView):
                                                              poll_user_id=request.query_params['id'],
                                                              user_valuer_id=request.user.profile.id).exists()
         else:
-            active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category=category,
-                                                 id=request.query_params['id'])
-            check_poll_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
-                                                             user_valuer_id=request.user.profile.id).exists()
+            if category == 'test':
+                active_test = Test.objects.get(session_id=active_session,
+                                               in_archive=False,
+                                               latePosting=False,
+                                               id=request.query_params['id'])
+                check_test_completed = 0
+            else:
+                active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category=category,
+                                                     id=request.query_params['id'])
+                check_poll_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
+                                                                 user_valuer_id=request.user.profile.id).exists()
         if check_poll_completed:
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
@@ -399,7 +406,7 @@ class GetPollsParticipant(APIView):
             get_all_polls = get_all_polls.exclude(id=el.poll_id)
 
         """Разделение по категориям"""
-        list_category = ['service', 'spiker', 'other']
+        list_category = ['service', 'spiker', 'other', 'test']
         data = dict.fromkeys(list_category)
         for i in list_category:
 
@@ -409,6 +416,9 @@ class GetPollsParticipant(APIView):
                 continue
             else:
                 data[i] = serializer
+        get_test = Test.objects.filter(session_id=Profile.objects.get(id=user_id).session_id,latePosting=False, in_archive=False)
+        serializer = TestSerializer(get_test, many=True).data
+        data['test'] = serializer
 
         return Response(data)
 
