@@ -215,7 +215,7 @@ class Test(models.Model):
     session = models.ForeignKey(SessionTC, on_delete=models.CASCADE, related_name='Смена', to_field='number_session')
     num_comp = models.ForeignKey('NumComp', on_delete=models.CASCADE, related_name='Компетенция', to_field='number')
     latePosting = models.BooleanField('Отложная публикация?', default=False)
-
+    in_archive = models.BooleanField('Архивный опрос?', default=False)
 
     def __str__(self):
         return self.title
@@ -230,3 +230,28 @@ class NumComp(models.Model):
 
     def __str__(self):
         return str(self.number)
+
+
+class QuestionsTest(models.Model):
+    question = models.CharField('Вопрос', null=False, max_length=255)
+    test = models.ForeignKey(Test, related_name='Тест', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.question
+
+    class Meta:
+        verbose_name = 'Вопрос'
+        verbose_name_plural = 'Вопросы'
+
+
+class AnswersTest(models.Model):
+    answer = models.CharField('Ответ', null=False, max_length=255)
+    points = models.IntegerField('Баллы', default=0, null=False)
+    question = models.ForeignKey(QuestionsTest, related_name='Вопрос', on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.question, self.answer
+
+    class Meta:
+        verbose_name = 'Ответ'
+        verbose_name_plural = 'Ответы'

@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.settings import api_settings
 
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
-    LogPoint, PollsCheck, QuestionsCheck, RatingTeam
+    LogPoint, PollsCheck, QuestionsCheck, RatingTeam, Test
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -110,10 +110,12 @@ class RatingSerializer(serializers.ModelSerializer):
     def get_user(obj):
         user = Profile.objects.get(username=obj.username)
         return user.first_name + ' ' + user.last_name
+
     @staticmethod
     def get_team(obj):
         user = Profile.objects.get(username=obj.username)
         return user.team_id
+
     @staticmethod
     def get_session(obj):
         user = Profile.objects.get(username=obj.username)
@@ -157,4 +159,12 @@ class RatingTeamSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = RatingTeam
+        fields = '__all__'
+
+
+class TestSerializer(serializers.ModelSerializer):
+    """Сериалайзер теста"""
+
+    class Meta:
+        model = Test
         fields = '__all__'

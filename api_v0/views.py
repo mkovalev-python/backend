@@ -21,10 +21,10 @@ from api_v0.utils_views import save_poll_participant, save_poll_all, rating, poi
     add_points
 from backend.settings import MEDIA_ROOT
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
-    PollsCheck, QuestionsCheck, LogPoint, FileUpload, RatingTeam, Test
+    PollsCheck, QuestionsCheck, LogPoint, FileUpload, RatingTeam, Test, QuestionsTest, AnswersTest
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
     CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer, \
-    LogPointSerializer, QuestionsSerializer, QuestionsCheckSerializer, RatingTeamSerializer
+    LogPointSerializer, QuestionsSerializer, QuestionsCheckSerializer, RatingTeamSerializer, TestSerializer
 import pandas as pd
 
 
@@ -179,7 +179,10 @@ class GetActivePolls(APIView):
     def get(request):
         queryset = Polls.objects.filter(in_archive=False, latePosting=False)
         serializer = PollsSerializer(queryset, many=True)
-        return Response(serializer.data)
+
+        queryset = Test.objects.filter(in_archive=False, latePosting=False)
+        serializerTest = TestSerializer(queryset, many=True)
+        return Response(serializer.data + serializerTest.data)
 
 
 class GetLatePolls(APIView):
@@ -189,7 +192,10 @@ class GetLatePolls(APIView):
     def get(request):
         queryset = Polls.objects.filter(in_archive=False, latePosting=True)
         serializer = PollsSerializer(queryset, many=True)
-        return Response(serializer.data)
+
+        queryset = Test.objects.filter(in_archive=False, latePosting=True)
+        serializerTest = TestSerializer(queryset, many=True)
+        return Response(serializer.data + serializerTest.data)
 
 
 class GetArchivePolls(APIView):
@@ -199,7 +205,10 @@ class GetArchivePolls(APIView):
     def get(request):
         queryset = Polls.objects.filter(in_archive=True)
         serializer = PollsSerializer(queryset, many=True)
-        return Response(serializer.data)
+
+        queryset = Test.objects.filter(in_archive=True, )
+        serializerTest = TestSerializer(queryset, many=True)
+        return Response(serializer.data + serializerTest.data)
 
 
 class GetViewPoll(APIView):
@@ -236,25 +245,59 @@ class MovePolls(APIView):
 
     @staticmethod
     def post(request):
-        poll = Polls.objects.get(id=request.data['id'])
-        if request.data['type'] == 'archive':
-            if poll.category == 'participant' and poll.latePosting == False:
-                get_points(poll)
-            poll.in_archive = True
-            poll.save()
-        if request.data['type'] == 'delete':
-            poll.delete()
-        if request.data['type'] == 'public':
-            if poll.category == 'participant':
-                if Polls.objects.filter(in_archive=False, latePosting=False, category='participant').exists():
-                    poll_last = Polls.objects.get(in_archive=False, latePosting=False, category='participant')
-                    poll_last.in_archive = True
-                    poll_last.save()
-            poll.latePosting = False
-            poll.in_archive = False
-            poll.datePosting = datetime.datetime.now()
-            poll.save()
-        return Response(status=status.HTTP_200_OK)
+        try:
+            if request.data['comp']:
+                test = Test.objects.get(id=request.data['id'])
+                if request.data['type'] == 'archive':
+                    test.in_archive = True
+                    test.save()
+                if request.data['type'] == 'delete':
+                    test.delete()
+                if request.data['type'] == 'public':
+                    test.latePosting = False
+                    test.in_archive = False
+                    test.save()
+                return Response(status=status.HTTP_200_OK)
+            else:
+                poll = Polls.objects.get(id=request.data['id'])
+                if request.data['type'] == 'archive':
+                    if poll.category == 'participant' and poll.latePosting == False:
+                        get_points(poll)
+                    poll.in_archive = True
+                    poll.save()
+                if request.data['type'] == 'delete':
+                    poll.delete()
+                if request.data['type'] == 'public':
+                    if poll.category == 'participant':
+                        if Polls.objects.filter(in_archive=False, latePosting=False, category='participant').exists():
+                            poll_last = Polls.objects.get(in_archive=False, latePosting=False, category='participant')
+                            poll_last.in_archive = True
+                            poll_last.save()
+                    poll.latePosting = False
+                    poll.in_archive = False
+                    poll.datePosting = datetime.datetime.now()
+                    poll.save()
+                return Response(status=status.HTTP_200_OK)
+        except:
+            poll = Polls.objects.get(id=request.data['id'])
+            if request.data['type'] == 'archive':
+                if poll.category == 'participant' and poll.latePosting == False:
+                    get_points(poll)
+                poll.in_archive = True
+                poll.save()
+            if request.data['type'] == 'delete':
+                poll.delete()
+            if request.data['type'] == 'public':
+                if poll.category == 'participant':
+                    if Polls.objects.filter(in_archive=False, latePosting=False, category='participant').exists():
+                        poll_last = Polls.objects.get(in_archive=False, latePosting=False, category='participant')
+                        poll_last.in_archive = True
+                        poll_last.save()
+                poll.latePosting = False
+                poll.in_archive = False
+                poll.datePosting = datetime.datetime.now()
+                poll.save()
+            return Response(status=status.HTTP_200_OK)
 
 
 class GetTeam(APIView):
@@ -583,10 +626,20 @@ class CreateTest(APIView):
 
     @staticmethod
     def post(request):
-        Test(title=request.data['values']['name'],
-             description=request.data['values']['description'],
-             points=request.data['values']['points'],
-             session_id=request.data['values']['session'],
-             num_comp_id=int(request.data['values']['numComp'])).save()
+        try:
+            test = Test(title=request.data['values']['name'],
+                        description=request.data['values']['description'],
+                        points=request.data['values']['points'],
+                        session_id=request.data['values']['session'],
+                        num_comp_id=int(request.data['values']['numComp']))
+            test.save()
+            for el in request.data['listQuestions']:
+                question = QuestionsTest(question=el['question'], test_id=test.id)
+                question.save()
+                for i in el['answers']:
+                    answer = AnswersTest(answer=i['answer'], points=i['point'], question_id=question.id)
+                    answer.save()
 
-        return Response(status=status.HTTP_201_CREATED)
+            return Response(status=status.HTTP_201_CREATED)
+        except:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
