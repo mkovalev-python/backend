@@ -21,7 +21,7 @@ from api_v0.utils_views import save_poll_participant, save_poll_all, rating, poi
     add_points
 from backend.settings import MEDIA_ROOT
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
-    PollsCheck, QuestionsCheck, LogPoint, FileUpload, RatingTeam, Test, QuestionsTest, AnswersTest
+    PollsCheck, QuestionsCheck, LogPoint, FileUpload, RatingTeam, Test, QuestionsTest, AnswersTest, CheckTest
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
     CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer, \
     LogPointSerializer, QuestionsSerializer, QuestionsCheckSerializer, RatingTeamSerializer, TestSerializer
@@ -335,7 +335,7 @@ class GetPollTeam(APIView):
                                                in_archive=False,
                                                latePosting=False,
                                                id=request.query_params['id'])
-                check_test_completed = 0
+                check_test_completed = CheckTest.objects.filter(test_id=active_test.id, user=request.user.profile.id).exists()
             else:
                 active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category=category,
                                                      id=request.query_params['id'])
@@ -344,24 +344,30 @@ class GetPollTeam(APIView):
         if check_poll_completed:
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
-            serializer = PollsSerializer(active_poll_team).data
-            queryset = Questions.objects.filter(poll_id=active_poll_team.id)
-            list_questions = []
-            i = 0
-            for item in queryset:
-                question = item.question
-                answer = item.answer.split(' ')
-                if item.poll.category != 'participant':
-                    del answer[0]
-                else:
-                    for i in range(int(answer[0]) + 1):
-                        if i == 0:
-                            answer.clear()
-                        answer.append(i)
-                i += 1
-                list_questions.append({'question': question, 'answer': answer, 'id': i})
+            if category == 'test':
+                serializer = TestSerializer(active_test).data
+                queryset = QuestionsTest.objects.filter(test_id=active_test.id)
 
-            data = {'poll_info': serializer, 'questions': list_questions}
+                #todo:'Допилить составление списка вопросов и ответов'
+            else:
+                serializer = PollsSerializer(active_poll_team).data
+                queryset = Questions.objects.filter(poll_id=active_poll_team.id)
+                list_questions = []
+                i = 0
+                for item in queryset:
+                    question = item.question
+                    answer = item.answer.split(' ')
+                    if item.poll.category != 'participant':
+                        del answer[0]
+                    else:
+                        for i in range(int(answer[0]) + 1):
+                            if i == 0:
+                                answer.clear()
+                            answer.append(i)
+                    i += 1
+                    list_questions.append({'question': question, 'answer': answer, 'id': i})
+
+                data = {'poll_info': serializer, 'questions': list_questions}
 
             return Response(data)
 

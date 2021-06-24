@@ -255,3 +255,15 @@ class AnswersTest(models.Model):
     class Meta:
         verbose_name = 'Ответ'
         verbose_name_plural = 'Ответы'
+
+
+class CheckTest(models.Model):
+    test = models.ForeignKey(Test, null=False, on_delete=models.CASCADE)
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE, null=False, related_name='Пользователь')
+
+    def __str__(self):
+        return self.test, self.user
+
+    class Meta:
+        verbose_name = 'Пройденный тест'
+        verbose_name_plural = 'Пройденные тесты'
