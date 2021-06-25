@@ -5,6 +5,7 @@ import smtplib
 import ssl
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from django.db.models import Sum
 
 import pandas
 from django.http import FileResponse
@@ -21,7 +22,8 @@ from api_v0.utils_views import save_poll_participant, save_poll_all, rating, poi
     add_points
 from backend.settings import MEDIA_ROOT
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
-    PollsCheck, QuestionsCheck, LogPoint, FileUpload, RatingTeam, Test, QuestionsTest, AnswersTest, CheckTest
+    PollsCheck, QuestionsCheck, LogPoint, FileUpload, RatingTeam, Test, QuestionsTest, AnswersTest, CheckTest, \
+    QuestionsCheckTest
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
     CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer, \
     LogPointSerializer, QuestionsSerializer, QuestionsCheckSerializer, RatingTeamSerializer, TestSerializer
@@ -318,6 +320,7 @@ class GetPollTeam(APIView):
 
     @staticmethod
     def get(request):
+        global check_completed, active_test, list_questions, active_poll_team
         if request.query_params.__len__() == 1:
             category = 'participant'
         else:
@@ -326,7 +329,7 @@ class GetPollTeam(APIView):
 
         if category == 'participant':
             active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category=category)
-            check_poll_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
+            check_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
                                                              poll_user_id=request.query_params['id'],
                                                              user_valuer_id=request.user.profile.id).exists()
         else:
@@ -335,24 +338,32 @@ class GetPollTeam(APIView):
                                                in_archive=False,
                                                latePosting=False,
                                                id=request.query_params['id'])
-                check_test_completed = CheckTest.objects.filter(test_id=active_test.id, user=request.user.profile.id).exists()
+                check_completed = CheckTest.objects.filter(test_id=active_test.id, user=request.user.profile.id).exists()
             else:
                 active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category=category,
                                                      id=request.query_params['id'])
-                check_poll_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
+                check_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
                                                                  user_valuer_id=request.user.profile.id).exists()
-        if check_poll_completed:
+        if check_completed:
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
             if category == 'test':
                 serializer = TestSerializer(active_test).data
                 queryset = QuestionsTest.objects.filter(test_id=active_test.id)
+                list_questions = []
+                for el in queryset:
+                    queryset_answers = AnswersTest.objects.filter(question_id=el.id)
+                    answer = []
+                    for i in queryset_answers:
+                        answer.append(i.answer)
+                    list_questions.append({'question': el.question, 'answer': answer, 'id': el.id})
+                data = {'poll_info': serializer, 'questions': list_questions,'type': 'test'}
 
-                #todo:'Допилить составление списка вопросов и ответов'
             else:
                 serializer = PollsSerializer(active_poll_team).data
                 queryset = Questions.objects.filter(poll_id=active_poll_team.id)
                 list_questions = []
+
                 i = 0
                 for item in queryset:
                     question = item.question
@@ -367,7 +378,7 @@ class GetPollTeam(APIView):
                     i += 1
                     list_questions.append({'question': question, 'answer': answer, 'id': i})
 
-                data = {'poll_info': serializer, 'questions': list_questions}
+                data = {'poll_info': serializer, 'questions': list_questions,'type': 'other'}
 
             return Response(data)
 
@@ -378,7 +389,7 @@ class CheckPollTeam(APIView):
     @staticmethod
     def post(request):
 
-        if request.data.__len__() == 3:
+        if request.data['type'] == 'other' or request.data['type'] == 'test':
             save_poll(request.data)
             return Response(status=status.HTTP_200_OK)
         else:
@@ -411,6 +422,8 @@ class GetPollsParticipant(APIView):
         for el in get_check_polls:
             get_all_polls = get_all_polls.exclude(id=el.poll_id)
 
+
+
         """Разделение по категориям"""
         list_category = ['service', 'spiker', 'other', 'test']
         data = dict.fromkeys(list_category)
@@ -422,9 +435,13 @@ class GetPollsParticipant(APIView):
                 continue
             else:
                 data[i] = serializer
-        get_test = Test.objects.filter(session_id=Profile.objects.get(id=user_id).session_id,latePosting=False, in_archive=False)
+        get_test = Test.objects.filter(session_id=Profile.objects.get(id=user_id).session_id, latePosting=False, in_archive=False)
+        get_check_test = CheckTest.objects.filter(user_id=user_id)
+        for el in get_check_test:
+            get_test = get_test.exclude(id=el.test_id)
         serializer = TestSerializer(get_test, many=True).data
-        data['test'] = serializer
+        if get_test.count() != 0:
+            data['test'] = serializer
 
         return Response(data)
 
@@ -488,6 +505,7 @@ class GetAnalytics(APIView):
                 j += 1
 
             i += 1
+
         data = {'logger': logger_list, 'rating': rating_list, 'user': serializer_user}
         return Response(data)
 
@@ -527,7 +545,7 @@ class GetTableRatingTeam(APIView):
         i = 1
         for el in all_users:
             if el.username.profile.session_id == int(request.query_params.__getitem__('session')):
-                if el.username.profile.team_id == 'Веселые ребята':
+                if el.username.profile.team_id == 'Команда ' + request.query_params.__getitem__('team'):
                     user = Profile.objects.get(username=el.username).first_name + ' ' + \
                            Profile.objects.get(username=el.username).last_name
                     data = {'rating': i, 'points': el.points, 'user': user}
@@ -659,3 +677,29 @@ class CreateTest(APIView):
             return Response(status=status.HTTP_201_CREATED)
         except:
             return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
+class GetTests(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        users = Profile.objects.filter(session_id=int(request.query_params.__getitem__('session')),
+                                       team_id='Команда ' + request.query_params.__getitem__('team'))
+        for profile in users:
+            fio = profile.first_name + ' ' + profile.last_name
+            list_competition = [1, 2, 3, 4]
+            for el in list_competition:
+                tests = list(Test.objects.filter(num_comp_id=el))
+                first_test = tests[0].id
+                second_test = tests[1].id
+
+                get_answers = QuestionsCheckTest.objects.filter(user_valuer_id=profile.id,
+                                                            poll_id=first_test).aggregate(Sum('point'))
+
+
+
+                print(1)
+
+
+        print(1)

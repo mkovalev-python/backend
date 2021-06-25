@@ -2,7 +2,8 @@ from datetime import datetime
 
 from rest_framework import status
 
-from model.models import Polls, Questions, Rating, Profile, PollsCheck, QuestionsCheck, Team, LogPoint, RatingTeam
+from model.models import Polls, Questions, Rating, Profile, PollsCheck, QuestionsCheck, Team, LogPoint, RatingTeam, \
+    CheckTest, QuestionsCheckTest, QuestionsTest, Test, AnswersTest
 
 
 def save_poll_participant(request):
@@ -92,31 +93,55 @@ def points_my_team(team, poll, s_points, user):
     save_points = Rating.objects.get(username_id=user.username_id)
     save_points.points += points
     save_points.save()
-    log_point(points, poll.id, user.id, True)
+    log_point(points, poll.id, user.id, True,None)
 
 
 def save_poll(params):
-    poll = PollsCheck(poll_id=params['id_poll'], user_valuer_id=params['user_id'])
-    poll.save()
+    if params['type'] == 'test':
+        test = CheckTest(test_id=params['id_poll'], user_id=int(params['user_id']))
+        test.save()
 
-    for el in params['answers']:
-        get_id_question = Questions.objects.get(question=el).id
-        QuestionsCheck(poll_id=params['id_poll'],
-                       user_valuer_id=params['user_id'],
-                       answer=params['answers'][el],
-                       question_id=get_id_question,
-                       poll_check_id=poll.id).save()
+        for el in params['answers']:
+            get_id_question = QuestionsTest.objects.get(question=el, test_id=params['id_poll']).id
+            QuestionsCheckTest(poll_id=params['id_poll'],
+                               user_valuer_id=params['user_id'],
+                               answer=params['answers'][el],
+                               question_id=get_id_question,
+                               poll_check_id=test.id,
+                               point=AnswersTest.objects.get(question_id=get_id_question, answer=params['answers'][el]).points).save()
+            add_points_for_user = Rating.objects.get(
+                username_id=Profile.objects.get(id=params['user_id']).username_id)
+            add_points_for_user.points += Test.objects.get(id=params['id_poll']).points
+            add_points_for_user.save()
+            log_point(Test.objects.get(id=params['id_poll']).points, params['id_poll'], params['user_id'], True, 'test')
+            """Формирование рейтинга команды"""
+            get_user = Profile.objects.get(id=params['user_id'])
+            add_point_team = RatingTeam.objects.get(team_id=get_user.team_id, session_id=get_user.session_id)
+            add_point_team.points += test.test.points
+            add_point_team.save()
 
-    add_points_for_user = Rating.objects.get(
-        username_id=Profile.objects.get(id=params['user_id']).username_id)
-    add_points_for_user.points += Polls.objects.get(id=params['id_poll']).points
-    add_points_for_user.save()
-    log_point(Polls.objects.get(id=params['id_poll']).points, params['id_poll'], params['user_id'], True)
-    """Формирование рейтинга команды"""
-    get_user = Profile.objects.get(id=params['user_id'])
-    add_point_team = RatingTeam.objects.get(team_id=get_user.team_id, session_id=get_user.session_id)
-    add_point_team.points += poll.poll.points
-    add_point_team.save()
+    else:
+        poll = PollsCheck(poll_id=params['id_poll'], user_valuer_id=params['user_id'])
+        poll.save()
+
+        for el in params['answers']:
+            get_id_question = Questions.objects.get(question=el).id
+            QuestionsCheck(poll_id=params['id_poll'],
+                           user_valuer_id=params['user_id'],
+                           answer=params['answers'][el],
+                           question_id=get_id_question,
+                           poll_check_id=poll.id).save()
+
+        add_points_for_user = Rating.objects.get(
+            username_id=Profile.objects.get(id=params['user_id']).username_id)
+        add_points_for_user.points += Polls.objects.get(id=params['id_poll']).points
+        add_points_for_user.save()
+        log_point(Polls.objects.get(id=params['id_poll']).points, params['id_poll'], params['user_id'], True,None)
+        """Формирование рейтинга команды"""
+        get_user = Profile.objects.get(id=params['user_id'])
+        add_point_team = RatingTeam.objects.get(team_id=get_user.team_id, session_id=get_user.session_id)
+        add_point_team.points += poll.poll.points
+        add_point_team.save()
 
 
 def get_points(poll):
@@ -145,18 +170,19 @@ def add_points(req, poll):
         add_p = Rating.objects.get(username_id=get_user.username_id)
         add_p.points += poll.poll.points
         add_p.save()
-        log_point(poll.poll.points, poll.poll.id, get_user.id, True)
+        log_point(poll.poll.points, poll.poll.id, get_user.id, True, None)
         """Формирование рейтинга команды"""
         add_point_team = RatingTeam.objects.get(team_id=get_user.team_id, session_id=get_user.session_id)
         add_point_team.points += poll.poll.points
         add_point_team.save()
 
-def log_point(points, poll_id, user_id, bool_add):
+def log_point(points, poll_id, user_id, bool_add, type):
     """Функция логгирования баллов"""
-
+    if type == 'test':
+        poll = Test.objects.get(id=poll_id).title
+    else:
+        poll = Polls.objects.get(id=poll_id).title
     user = Profile.objects.get(id=user_id)
-    poll = Polls.objects.get(id=poll_id).title
-
     LogPoint(points=points, date=datetime.now(), add=bool_add, poll=poll, username=user.first_name
                                                                                          + ' ' +
                                                                                          user.last_name).save()

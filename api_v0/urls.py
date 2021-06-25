@@ -3,7 +3,8 @@ from rest_framework_jwt.views import obtain_jwt_token, refresh_jwt_token
 from django.conf.urls.static import static
 from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreateUser, GetUserList, DeleteUser, \
     CreateNewPoll, GetActivePolls, GetViewPoll, MovePolls, GetLatePolls, GetArchivePolls, GetTeam, GetPollTeam, \
-    CheckPollTeam, GetPollsParticipant, GetAnalytics, GetExcel,UploadUser, GetTableRating, GetTableRatingTeam, CreateTest
+    CheckPollTeam, GetPollsParticipant, GetAnalytics, GetExcel, UploadUser, GetTableRating, GetTableRatingTeam, \
+    CreateTest, GetTests
 from backend import settings
 
 urlpatterns = [
@@ -30,6 +31,7 @@ urlpatterns = [
     path('get/table_rating_team/', GetTableRatingTeam.as_view()),
     path('get/excel/', GetExcel.as_view()),
     path('upload_user/', UploadUser.as_view()),
-    path('post/test/', CreateTest.as_view())
+    path('post/test/', CreateTest.as_view()),
+    path('get/tests/', GetTests.as_view())
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

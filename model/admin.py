@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 
 from model.models import Profile, Country, Team, PermissionUser, Permission, Polls, Questions, Rating, SessionTC, \
-    PollsCheck, QuestionsCheck, FileUpload, RatingTeam, Test, NumComp
+    PollsCheck, QuestionsCheck, FileUpload, RatingTeam, Test, NumComp, CheckTest
 
 
 class UserInline(admin.StackedInline):
@@ -50,3 +50,4 @@ admin.site.register(FileUpload)
 admin.site.register(RatingTeam)
 admin.site.register(Test)
 admin.site.register(NumComp)
+admin.site.register(CheckTest)

@@ -249,8 +249,8 @@ class AnswersTest(models.Model):
     points = models.IntegerField('Баллы', default=0, null=False)
     question = models.ForeignKey(QuestionsTest, related_name='Вопрос', on_delete=models.CASCADE)
 
-    def __str__(self):
-        return self.question, self.answer
+    def __int__(self):
+        return self.question
 
     class Meta:
         verbose_name = 'Ответ'
@@ -261,9 +261,26 @@ class CheckTest(models.Model):
     test = models.ForeignKey(Test, null=False, on_delete=models.CASCADE)
     user = models.ForeignKey(Profile, on_delete=models.CASCADE, null=False, related_name='Пользователь')
 
-    def __str__(self):
-        return self.test, self.user
+    def __int__(self):
+        return self.test
 
     class Meta:
         verbose_name = 'Пройденный тест'
         verbose_name_plural = 'Пройденные тесты'
+
+
+class QuestionsCheckTest(models.Model):
+    question = models.ForeignKey(QuestionsTest, on_delete=models.CASCADE, verbose_name='Вопрос')
+    answer = models.CharField('Ответ', max_length=100)
+    user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик')
+    poll = models.ForeignKey(Test, on_delete=models.CASCADE, verbose_name='Test')
+    poll_check = models.ForeignKey(CheckTest, on_delete=models.CASCADE, default=None,
+                                   verbose_name='ID пройденного теста')
+    point = models.IntegerField('Points', default=0)
+
+    def __str__(self):
+        return self.question.question
+
+    class Meta:
+        verbose_name = 'Ответ на вопрос'
+        verbose_name_plural = 'Ответы на вопросы'
