@@ -109,16 +109,17 @@ def save_poll(params):
                                question_id=get_id_question,
                                poll_check_id=test.id,
                                point=AnswersTest.objects.get(question_id=get_id_question, answer=params['answers'][el]).points).save()
-            add_points_for_user = Rating.objects.get(
-                username_id=Profile.objects.get(id=params['user_id']).username_id)
-            add_points_for_user.points += Test.objects.get(id=params['id_poll']).points
-            add_points_for_user.save()
-            log_point(Test.objects.get(id=params['id_poll']).points, params['id_poll'], params['user_id'], True, 'test')
-            """Формирование рейтинга команды"""
-            get_user = Profile.objects.get(id=params['user_id'])
-            add_point_team = RatingTeam.objects.get(team_id=get_user.team_id, session_id=get_user.session_id)
-            add_point_team.points += test.test.points
-            add_point_team.save()
+
+        add_points_for_user = Rating.objects.get(
+            username_id=Profile.objects.get(id=params['user_id']).username_id)
+        add_points_for_user.points += Test.objects.get(id=params['id_poll']).points
+        add_points_for_user.save()
+        log_point(Test.objects.get(id=params['id_poll']).points, params['id_poll'], params['user_id'], True, 'test')
+        """Формирование рейтинга команды"""
+        get_user = Profile.objects.get(id=params['user_id'])
+        add_point_team = RatingTeam.objects.get(team_id=get_user.team_id, session_id=get_user.session_id)
+        add_point_team.points += test.test.points
+        add_point_team.save()
 
     else:
         poll = PollsCheck(poll_id=params['id_poll'], user_valuer_id=params['user_id'])

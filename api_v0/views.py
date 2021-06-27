@@ -330,20 +330,21 @@ class GetPollTeam(APIView):
         if category == 'participant':
             active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category=category)
             check_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
-                                                             poll_user_id=request.query_params['id'],
-                                                             user_valuer_id=request.user.profile.id).exists()
+                                                        poll_user_id=request.query_params['id'],
+                                                        user_valuer_id=request.user.profile.id).exists()
         else:
             if category == 'test':
                 active_test = Test.objects.get(session_id=active_session,
                                                in_archive=False,
                                                latePosting=False,
                                                id=request.query_params['id'])
-                check_completed = CheckTest.objects.filter(test_id=active_test.id, user=request.user.profile.id).exists()
+                check_completed = CheckTest.objects.filter(test_id=active_test.id,
+                                                           user=request.user.profile.id).exists()
             else:
                 active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category=category,
                                                      id=request.query_params['id'])
                 check_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
-                                                                 user_valuer_id=request.user.profile.id).exists()
+                                                            user_valuer_id=request.user.profile.id).exists()
         if check_completed:
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
         else:
@@ -357,7 +358,7 @@ class GetPollTeam(APIView):
                     for i in queryset_answers:
                         answer.append(i.answer)
                     list_questions.append({'question': el.question, 'answer': answer, 'id': el.id})
-                data = {'poll_info': serializer, 'questions': list_questions,'type': 'test'}
+                data = {'poll_info': serializer, 'questions': list_questions, 'type': 'test'}
 
             else:
                 serializer = PollsSerializer(active_poll_team).data
@@ -378,7 +379,7 @@ class GetPollTeam(APIView):
                     i += 1
                     list_questions.append({'question': question, 'answer': answer, 'id': i})
 
-                data = {'poll_info': serializer, 'questions': list_questions,'type': 'other'}
+                data = {'poll_info': serializer, 'questions': list_questions, 'type': 'other'}
 
             return Response(data)
 
@@ -422,8 +423,6 @@ class GetPollsParticipant(APIView):
         for el in get_check_polls:
             get_all_polls = get_all_polls.exclude(id=el.poll_id)
 
-
-
         """Разделение по категориям"""
         list_category = ['service', 'spiker', 'other', 'test']
         data = dict.fromkeys(list_category)
@@ -435,7 +434,8 @@ class GetPollsParticipant(APIView):
                 continue
             else:
                 data[i] = serializer
-        get_test = Test.objects.filter(session_id=Profile.objects.get(id=user_id).session_id, latePosting=False, in_archive=False)
+        get_test = Test.objects.filter(session_id=Profile.objects.get(id=user_id).session_id, latePosting=False,
+                                       in_archive=False)
         get_check_test = CheckTest.objects.filter(user_id=user_id)
         for el in get_check_test:
             get_test = get_test.exclude(id=el.test_id)
@@ -573,6 +573,55 @@ class GetExcel(APIView):
             queryset = Rating.objects.all()
             serializer = RatingSerializer(queryset, many=True).data
 
+        if request.query_params['type'] == 'excel_test':
+            users = Profile.objects.all()
+            list_elements_table = []
+            for profile in users:
+                fio = profile.first_name + ' ' + profile.last_name
+                list_competition = [1, 2, 3, 4]
+                data = {'fio': fio,
+                        'to1': None, 'after1': None, 'difference1': None,
+                        'to2': None, 'after2': None, 'difference2': None,
+                        'to3': None, 'after3': None, 'difference3': None,
+                        'to4': None, 'after4': None, 'difference4': None}
+                for el in list_competition:
+                    tests = list(Test.objects.filter(num_comp_id=el))
+                    if tests.__len__() == 2:
+                        first_test = tests[0].id
+                        second_test = tests[1].id
+                        get_summ_points = QuestionsCheckTest.objects.filter(user_valuer_id=profile.id,
+                                                                            poll_id=first_test)
+                        summ = 0
+                        for j in get_summ_points:
+                            summ += j.point
+                        data[('to' + str(el))] = summ
+
+                        get_summ_points = QuestionsCheckTest.objects.filter(user_valuer_id=profile.id,
+                                                                            poll_id=second_test)
+                        summ = 0
+                        for j in get_summ_points:
+                            summ += j.point
+                        data[('after' + str(el))] = summ
+                        data[('difference' + str(el))] = data.get('to' + str(el)) - data.get('after' + str(el))
+                    elif tests.__len__() == 0:
+                        data[('to' + str(el))] = 0
+                        data[('after' + str(el))] = 0
+                        data[('difference' + str(el))] = 0
+                    else:
+                        first_test = tests[0].id
+                        get_summ_points = QuestionsCheckTest.objects.filter(user_valuer_id=profile.id,
+                                                                            poll_id=first_test)
+                        summ = 0
+                        for j in get_summ_points:
+                            summ += j.point
+                        data[('to' + str(el))] = summ
+                        data[('after' + str(el))] = 0
+                        data[('difference' + str(el))] = data.get('to' + str(el)) - data.get('after' + str(el))
+
+                list_elements_table.append(data)
+            serializer = list_elements_table
+            file = 'Test_'
+
         df = pd.DataFrame(serializer)
         name = file + datetime.datetime.now().strftime("%d-%m-%Y %H:%M") + '.xlsx'
         df.to_excel(MEDIA_ROOT + '/file_excel/' + name)
@@ -686,20 +735,49 @@ class GetTests(APIView):
     def get(request):
         users = Profile.objects.filter(session_id=int(request.query_params.__getitem__('session')),
                                        team_id='Команда ' + request.query_params.__getitem__('team'))
+        list_elements_table = []
         for profile in users:
             fio = profile.first_name + ' ' + profile.last_name
             list_competition = [1, 2, 3, 4]
+            data = {'fio': fio,
+                    'to1': None, 'after1': None, 'difference1': None,
+                    'to2': None, 'after2': None, 'difference2': None,
+                    'to3': None, 'after3': None, 'difference3': None,
+                    'to4': None, 'after4': None, 'difference4': None}
             for el in list_competition:
                 tests = list(Test.objects.filter(num_comp_id=el))
-                first_test = tests[0].id
-                second_test = tests[1].id
+                if tests.__len__() == 2:
+                    first_test = tests[0].id
+                    second_test = tests[1].id
+                    get_summ_points = QuestionsCheckTest.objects.filter(user_valuer_id=profile.id,
+                                                                    poll_id=first_test)
+                    summ = 0
+                    for j in get_summ_points:
+                        summ += j.point
+                    data[('to' + str(el))] = summ
 
-                get_answers = QuestionsCheckTest.objects.filter(user_valuer_id=profile.id,
-                                                            poll_id=first_test).aggregate(Sum('point'))
+                    get_summ_points = QuestionsCheckTest.objects.filter(user_valuer_id=profile.id,
+                                                                        poll_id=second_test)
+                    summ = 0
+                    for j in get_summ_points:
+                        summ += j.point
+                    data[('after' + str(el))] = summ
+                    data[('difference' + str(el))] = data.get('to' + str(el)) - data.get('after' + str(el))
+                elif tests.__len__() == 0:
+                    data[('to' + str(el))] = 0
+                    data[('after' + str(el))] = 0
+                    data[('difference' + str(el))] = 0
+                else:
+                    first_test = tests[0].id
+                    get_summ_points = QuestionsCheckTest.objects.filter(user_valuer_id=profile.id,
+                                                                    poll_id=first_test)
+                    summ = 0
+                    for j in get_summ_points:
+                        summ += j.point
+                    data[('to' + str(el))] = summ
+                    data[('after' + str(el))] = 0
+                    data[('difference' + str(el))] = data.get('to' + str(el)) - data.get('after' + str(el))
 
+            list_elements_table.append(data)
 
-
-                print(1)
-
-
-        print(1)
+        return Response(list_elements_table)
