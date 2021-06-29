@@ -11,7 +11,7 @@ BASE_DIR_MEDIA = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = 'eqwwewqewq'
 DEBUG = env('DEBUG', default=True)
-ALLOWED_HOSTS = ['localhost','127.0.0.1','0.0.0.0']
+ALLOWED_HOSTS = ['localhost','127.0.0.1','0.0.0.0', '194.58.108.226']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
