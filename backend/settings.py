@@ -11,7 +11,7 @@ BASE_DIR_MEDIA = Path(__file__).resolve().parent.parent.parent
 
 SECRET_KEY = 'eqwwewqewq'
 DEBUG = env('DEBUG', default=True)
-ALLOWED_HOSTS = ['localhost','127.0.0.1']
+ALLOWED_HOSTS = ['localhost','127.0.0.1','0.0.0.0']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -65,11 +65,11 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': env('DATABASE_NAME'),
-        'USER': env('DATABASE_USER'),
-        'PASSWORD': env('DATABASE_PASSWORD'),
-        'HOST': env('DATABASE_HOST'),
-        'PORT': int(env('DATABASE_PORT')),
+        'NAME': env('POSTGRES_DB'),
+        'USER': env('POSTGRES_USER'),
+        'PASSWORD': env('POSTGRES_PASSWORD'),
+        'HOST': env('POSTGRES_HOST'),
+        'PORT': env('POSTGRES_PORT'),
     }
 }
 
