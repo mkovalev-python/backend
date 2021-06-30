@@ -7,7 +7,7 @@ env = environ.Env()
 environ.Env.read_env()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-BASE_DIR_MEDIA = Path(__file__).resolve().parent.parent.parent
+
 
 SECRET_KEY = 'eqwwewqewq'
 DEBUG = env('DEBUG', default=True)
@@ -104,9 +104,10 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-MEDIA_ROOT = os.path.join(BASE_DIR_MEDIA, 'frontend', 'public', 'images', 'media')
-MEDIA_URL = 'images/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = '/media/'
 
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
