@@ -132,6 +132,9 @@ CORS_ALLOW_METHODS = [
 
 CORS_ORIGIN_WHITELIST = (
     'https://localhost:3000',
+    'http://194.58.108.226',
+    'https://194.58.108.226',
+    'http://194.58.108.226:3000'
 )
 
 
