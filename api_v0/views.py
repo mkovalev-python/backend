@@ -17,7 +17,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import render
 from django.conf import settings
-from django.core.files.storage import FileSystemStorage
+from django.core.files.storage import FileSystemStorage, default_storage
 from api_v0.utils_views import save_poll_participant, save_poll_all, rating, points_my_team, save_poll, get_points, \
     add_points
 from backend.settings import MEDIA_ROOT
@@ -828,11 +828,11 @@ class GetTests(APIView):
         df2 = pd.DataFrame(list_rating_users)
         df3 = pd.DataFrame(list_rating_team)
         name = 'Отчет' + datetime.datetime.now().strftime("%d-%m-%Y %H:%M") + '.xlsx'
-        writer = pd.ExcelWriter('./media/file_excel/' + name, engine='xlsxwriter')
+        writer = pd.ExcelWriter(name, engine='xlsxwriter')
         df.to_excel(writer, sheet_name='test')
         df2.to_excel(writer, sheet_name='rating_user')
         df3.to_excel(writer, sheet_name='rating_team')
-        writer.save()
+        default_storage.save(name, writer)
 
         return Response({'test': list_elements_table, 'users': list_rating_users, 'team': list_rating_team, 'link': 'http://127.0.0.1:8000/media/file_excel/' + name})
 
