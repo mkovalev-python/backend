@@ -4,7 +4,7 @@ from django.conf.urls.static import static
 from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreateUser, GetUserList, DeleteUser, \
     CreateNewPoll, GetActivePolls, GetViewPoll, MovePolls, GetLatePolls, GetArchivePolls, GetTeam, GetPollTeam, \
     CheckPollTeam, GetPollsParticipant, GetAnalytics, GetExcel, UploadUser, GetTableRating, GetTableRatingTeam, \
-    CreateTest, GetTests
+    CreateTest, GetTests, AnaliticNew
 from backend import settings
 
 urlpatterns = [
@@ -26,7 +26,8 @@ urlpatterns = [
     path('get/poll/team/', GetPollTeam.as_view()),
     path('check/poll/team/', CheckPollTeam.as_view()),
     path('get/poll/', GetPollsParticipant.as_view()),
-    path('get/analytics/', GetAnalytics.as_view()),
+    path('get/analytics/1', GetAnalytics.as_view()),
+    path('get/analytics/', AnaliticNew.as_view()),
     path('get/table_rating/', GetTableRating.as_view()),
     path('get/table_rating_team/', GetTableRatingTeam.as_view()),
     path('get/excel/', GetExcel.as_view()),

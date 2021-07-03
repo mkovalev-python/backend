@@ -62,9 +62,30 @@ class GetUserInfo(APIView):
             queryset = RatingTeam.objects.get(team_id=request.user.profile.team_id,
                                               session_id=request.user.profile.session_id)
             serializer_rating_team = RatingTeamSerializer(queryset, many=False).data
+            get_team = Profile.objects.filter(team_id=request.user.profile.team_id,
+                                              session_id=request.user.profile.session_id).count()
+
+            """Вычисление коэффициента команды"""
+            get_active_session = SessionTC.objects.get(active_session=True)
+            get_active_team = RatingTeam.objects.filter(session_id=get_active_session.number_session)
+            koef_user = 0
+            for team in get_active_team:
+                get_users = Profile.objects.filter(session_id=get_active_session.number_session, team_id=team.team)
+                points = 0
+                for user in get_users:
+                    points += Rating.objects.get(username_id=user.username).points
+                try:
+                    koef_user += points / get_users.count()
+                except:
+                    continue
+            koef_team = serializer_rating.__getitem__(0)['points'] / (
+                    serializer_rating_team.__getitem__('points') / get_team) / (koef_user / get_active_team.count())
+            koef_user = serializer_rating.__getitem__(0)['points'] / (
+                    serializer_rating_team.__getitem__('points') / get_team)
             return Response({'user': serializer_user, 'permission': serializer_permission,
                              'rating': serializer_rating, 'status_session': status_session,
-                             'rating_team': serializer_rating_team})
+                             'rating_team': serializer_rating_team, 'koef_user': koef_user,
+                             'koef_team': round(koef_team, 2)})
         else:
             return Response({'user': serializer_user, 'permission': serializer_permission})
 
@@ -226,7 +247,7 @@ class GetViewPoll(APIView):
         i = 0
         for item in queryset:
             question = item.question
-            answer = item.answer.split(' ')
+            answer = item.answer.split('|')
             if item.poll.category != 'participant':
                 del answer[0]
             else:
@@ -736,6 +757,7 @@ class GetTests(APIView):
         users = Profile.objects.filter(session_id=int(request.query_params.__getitem__('session')),
                                        team_id='Команда ' + request.query_params.__getitem__('team'))
         list_elements_table = []
+        list_rating_users = []
         for profile in users:
             fio = profile.first_name + ' ' + profile.last_name
             list_competition = [1, 2, 3, 4]
@@ -750,7 +772,7 @@ class GetTests(APIView):
                     first_test = tests[0].id
                     second_test = tests[1].id
                     get_summ_points = QuestionsCheckTest.objects.filter(user_valuer_id=profile.id,
-                                                                    poll_id=first_test)
+                                                                        poll_id=first_test)
                     summ = 0
                     for j in get_summ_points:
                         summ += j.point
@@ -770,7 +792,7 @@ class GetTests(APIView):
                 else:
                     first_test = tests[0].id
                     get_summ_points = QuestionsCheckTest.objects.filter(user_valuer_id=profile.id,
-                                                                    poll_id=first_test)
+                                                                        poll_id=first_test)
                     summ = 0
                     for j in get_summ_points:
                         summ += j.point
@@ -780,4 +802,88 @@ class GetTests(APIView):
 
             list_elements_table.append(data)
 
-        return Response(list_elements_table)
+            """"Получение данных по участникам"""
+            rating_data = Rating.objects.get(username_id=profile.username)
+            data_user = {'fio': profile.first_name + ' ' + profile.last_name,
+                         'num': rating_data.rating,
+                         'points': rating_data.points,
+                         'team': profile.team_id,
+                         'session': profile.session_id}
+            list_rating_users.append(data_user)
+        """Рейтинг команд в сессии"""
+        rating_team = RatingTeam.objects.filter(session_id=int(request.query_params.__getitem__('session')))
+        i = 1
+        list_rating_team = []
+        for team in rating_team:
+            data_team = {
+                'num': i,
+                'team': team.team.name,
+                'session': team.session_id,
+                'points': team.points
+            }
+            list_rating_team.append(data_team)
+            i += 1
+
+        df = pd.DataFrame(list_elements_table)
+        df2 = pd.DataFrame(list_rating_users)
+        df3 = pd.DataFrame(list_rating_team)
+        name = 'Отчет' + datetime.datetime.now().strftime("%d-%m-%Y %H:%M") + '.xlsx'
+        writer = pd.ExcelWriter(MEDIA_ROOT + '/file_excel/' + name, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='test')
+        df2.to_excel(writer, sheet_name='rating_user')
+        df3.to_excel(writer, sheet_name='rating_team')
+        writer.save()
+
+        return Response({'test': list_elements_table, 'users': list_rating_users, 'team': list_rating_team, 'link': 'http://127.0.0.1:8000/media/file_excel/' + name})
+
+
+"""Аналитика новая версия"""
+
+
+class AnaliticNew(APIView):
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+
+    @staticmethod
+    def get(request):
+        """Сбор данных для логгера (Таблица 1 в первой карточке)"""
+        queryset_logger = LogPoint.objects.all()
+        logger_list = []
+        if queryset_logger.count() != 0:
+            for log in queryset_logger:
+                log_data = {
+                    'fio': log.username,
+                    'points': log.points,
+                    'date': log.date.strftime('%d/%m/%Y %H:%M:%S'),
+                    'polls_test': log.poll
+                }
+                logger_list.append(log_data)
+        """Сбор данных для рейтинга всех участников (Таблица 2 в первой карточке"""
+        queryset_rating_all_users = Rating.objects.all()
+        rating_user = []
+        if queryset_rating_all_users.count() != 0:
+            for user in queryset_rating_all_users:
+                rating_user_data = {
+                    'num': user.rating,
+                    'fio': user.username.profile.first_name + ' ' + user.username.profile.last_name,
+                    'points': user.points,
+                    'team': user.username.profile.team_id,
+                    'session': user.username.profile.session_id
+                }
+                rating_user.append(rating_user_data)
+
+        """Сбор данных для рейтинга всех команд (Таблица 3 в первой карточке)"""
+        queryset_rating_all_teams = RatingTeam.objects.all()
+        rating_team = []
+        if queryset_rating_all_teams.count() != 0:
+            for team in queryset_rating_all_teams:
+                rating_team_data = {
+                    'num': team.rating,
+                    'team': team.team_id,
+                    'session': team.session_id,
+                    'points': team.points
+                }
+                rating_team.append(rating_team_data)
+
+
+        data = {'logger': logger_list, 'rating_user': rating_user, 'rating_team': rating_team}
+        return Response(data)

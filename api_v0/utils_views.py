@@ -27,7 +27,7 @@ def save_poll_all(request):
     for question in request['questions']:
         str_answer = ''
         for answer in question['answers']:
-            str_answer += ' ' + answer['answer']
+            str_answer += '|' + answer['answer']
 
         save_question_and_answer(request, str_answer, question['question'])
 

@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'eqwwewqewq'
 DEBUG = env('DEBUG', default=True)
-ALLOWED_HOSTS = ['localhost','127.0.0.1','0.0.0.0', '194.58.108.226']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '194.58.108.226', 'tspolls.ru']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -133,7 +133,10 @@ CORS_ALLOW_METHODS = [
 
 CORS_ORIGIN_WHITELIST = (
     'https://localhost:3000',
+    'https://tspolls.ru:3000',
     'http://194.58.108.226',
+    'http://tspolls.ru',
+    'https://tspolls.ru',
     'https://194.58.108.226',
     'http://194.58.108.226:3000'
 )
