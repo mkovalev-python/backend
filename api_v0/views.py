@@ -834,7 +834,7 @@ class GetTests(APIView):
         df3.to_excel(writer, sheet_name='rating_team')
         writer.save()
 
-        return Response({'test': list_elements_table, 'users': list_rating_users, 'team': list_rating_team, 'link': 'http://127.0.0.1:8000/media/file_excel/' + name})
+        return Response({'test': list_elements_table, 'users': list_rating_users, 'team': list_rating_team, 'link': 'http://194.58.108.226:8000/media/file_excel/' + name})
 
 
 """Аналитика новая версия"""
