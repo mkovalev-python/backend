@@ -389,7 +389,7 @@ class GetPollTeam(APIView):
                 i = 0
                 for item in queryset:
                     question = item.question
-                    answer = item.answer.split(' ')
+                    answer = item.answer.split('|')
                     if item.poll.category != 'participant':
                         del answer[0]
                     else:
@@ -834,7 +834,8 @@ class GetTests(APIView):
         df3.to_excel(writer, sheet_name='rating_team')
         writer.save()
 
-        return Response({'test': list_elements_table, 'users': list_rating_users, 'team': list_rating_team, 'link': 'http://194.58.108.226:8000/media/file_excel/' + name})
+        return Response({'test': list_elements_table, 'users': list_rating_users, 'team': list_rating_team,
+                         'link': 'http://194.58.108.226:8000/media/file_excel/' + name})
 
 
 """Аналитика новая версия"""
@@ -884,6 +885,30 @@ class AnaliticNew(APIView):
                 }
                 rating_team.append(rating_team_data)
 
-
         data = {'logger': logger_list, 'rating_user': rating_user, 'rating_team': rating_team}
         return Response(data)
+
+
+def CreateStartInfo(response):
+    """Добавление смен"""
+
+    SessionTC(number_session=0, name_session='Смена Персонала', active_session=None).save()
+    SessionTC(number_session=1, name_session='Смена 1', active_session=True).save()
+    SessionTC(number_session=2, name_session='Смена 2', active_session=False).save()
+    SessionTC(number_session=3, name_session='Смена 3', active_session=False).save()
+    SessionTC(number_session=4, name_session='Смена 4', active_session=False).save()
+    SessionTC(number_session=5, name_session='Смена 5', active_session=False).save()
+
+    """Добавление команд"""
+    i = 4
+    while i < 26:
+        if i == 0:
+            Team(name='Staff').save()
+        else:
+            team = Team(name='Команда '+str(i))
+            team.save()
+            for session in SessionTC.objects.all().exclude(number_session=0):
+                RatingTeam(team=team, session=session).save()
+        i += 1
+
+    return HttpResponse("Here's the text of the Web page.")
