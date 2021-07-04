@@ -78,10 +78,16 @@ class GetUserInfo(APIView):
                     koef_user += points / get_users.count()
                 except:
                     continue
-            koef_team = serializer_rating.__getitem__(0)['points'] / (
-                    serializer_rating_team.__getitem__('points') / get_team) / (koef_user / get_active_team.count())
-            koef_user = serializer_rating.__getitem__(0)['points'] / (
-                    serializer_rating_team.__getitem__('points') / get_team)
+            try:
+                koef_team = serializer_rating.__getitem__(0)['points'] / (
+                        serializer_rating_team.__getitem__('points') / get_team) / (koef_user / get_active_team.count())
+            except ZeroDivisionError:
+                koef_team = 0
+            try:
+                koef_user = serializer_rating.__getitem__(0)['points'] / (
+                        serializer_rating_team.__getitem__('points') / get_team)
+            except ZeroDivisionError:
+                koef_user = 0
             return Response({'user': serializer_user, 'permission': serializer_permission,
                              'rating': serializer_rating, 'status_session': status_session,
                              'rating_team': serializer_rating_team, 'koef_user': koef_user,
