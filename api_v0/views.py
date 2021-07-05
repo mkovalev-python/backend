@@ -684,7 +684,6 @@ class UploadUser(APIView):
                 create_info_for_user = Profile(
                     first_name=row['Имя'],
                     last_name=row['Фамилия'],
-                    patronymic=row['Отчество'],
                     country_id=row['Город'],
                     team_id=row['Команда'],
                     birthday='2021-05-01',
