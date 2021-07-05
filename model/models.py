@@ -240,8 +240,8 @@ class QuestionsTest(models.Model):
         return self.question
 
     class Meta:
-        verbose_name = 'Вопрос'
-        verbose_name_plural = 'Вопросы'
+        verbose_name = 'Вопрос на тест'
+        verbose_name_plural = 'Вопросы на тест'
 
 
 class AnswersTest(models.Model):
@@ -253,8 +253,8 @@ class AnswersTest(models.Model):
         return self.question
 
     class Meta:
-        verbose_name = 'Ответ'
-        verbose_name_plural = 'Ответы'
+        verbose_name = 'Ответ на тест'
+        verbose_name_plural = 'Ответы на тест'
 
 
 class CheckTest(models.Model):
