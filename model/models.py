@@ -84,9 +84,9 @@ class Permission(models.Model):
 class Polls(models.Model):
     """Модель опросов"""
 
-    title = models.CharField('Заголовок', max_length=255)
-    description = models.CharField('Описание', max_length=510)
-    category = models.CharField('Категория', max_length=100)
+    title = models.CharField('Заголовок', max_length=2505)
+    description = models.CharField('Описание', max_length=5100)
+    category = models.CharField('Категория', max_length=1000)
     points = models.IntegerField('Баллы', default=10)
     latePosting = models.BooleanField('Отложная публикация?', default=False)
     datePosting = models.DateTimeField('Дата и время публикации', default=datetime.now())
@@ -105,8 +105,8 @@ class Questions(models.Model):
     """Модель вопросов и ответов"""
 
     poll = models.ForeignKey(Polls, on_delete=models.CASCADE)
-    question = models.CharField('Вопрос', max_length=255, unique=False)
-    answer = models.CharField('Ответ', max_length=255)
+    question = models.CharField('Вопрос', max_length=2505, unique=False)
+    answer = models.CharField('Ответ', max_length=2505)
 
     def __str__(self):
         return self.question
@@ -147,7 +147,7 @@ class RatingTeam(models.Model):
 
 class SessionTC(models.Model):
     number_session = models.IntegerField('Номер смены', default=0, unique=True)
-    name_session = models.CharField('Название смены', default='Смена не определена', unique=True, max_length=50)
+    name_session = models.CharField('Название смены', default='Смена не определена', unique=True, max_length=500)
     date_from_session = models.DateField('Дата начала смены', null=True, blank=True)
     date_to_session = models.DateField('Дата конца смены', null=True, blank=True)
     active_session = models.BooleanField('Активная смена', default=False, null=True)
@@ -174,7 +174,7 @@ class PollsCheck(models.Model):
 
 class QuestionsCheck(models.Model):
     question = models.ForeignKey(Questions, on_delete=models.CASCADE, verbose_name='Вопрос')
-    answer = models.CharField('Ответ', max_length=100)
+    answer = models.CharField('Ответ', max_length=1000)
     user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик')
     poll = models.ForeignKey(Polls, on_delete=models.CASCADE, verbose_name='Опрос')
     poll_check = models.ForeignKey(PollsCheck, on_delete=models.CASCADE, default=None,
@@ -192,7 +192,7 @@ class LogPoint(models.Model):
     username = models.CharField('Пользователь', max_length=255)
     points = models.IntegerField('Баллы', default=0)
     date = models.DateTimeField('Дата зачисления')
-    poll = models.CharField('Опрос', max_length=255)
+    poll = models.CharField('Опрос', max_length=2505)
     add = models.BooleanField('Зачисление', null=True)
 
     def __str__(self):
@@ -209,7 +209,7 @@ class FileUpload(models.Model):
 
 
 class Test(models.Model):
-    title = models.CharField('Заголовок теста', null=False, max_length=255)
+    title = models.CharField('Заголовок теста', null=False, max_length=3055)
     description = models.TextField('Описание теста')
     points = models.IntegerField('Баллы за прохождение')
     session = models.ForeignKey(SessionTC, on_delete=models.CASCADE, related_name='Смена', to_field='number_session')
@@ -233,7 +233,7 @@ class NumComp(models.Model):
 
 
 class QuestionsTest(models.Model):
-    question = models.CharField('Вопрос', null=False, max_length=255)
+    question = models.CharField('Вопрос', null=False, max_length=3055)
     test = models.ForeignKey(Test, related_name='Тест', on_delete=models.CASCADE)
 
     def __str__(self):
@@ -245,7 +245,7 @@ class QuestionsTest(models.Model):
 
 
 class AnswersTest(models.Model):
-    answer = models.CharField('Ответ', null=False, max_length=400)
+    answer = models.CharField('Ответ', null=False, max_length=4000)
     points = models.IntegerField('Баллы', default=0, null=False)
     question = models.ForeignKey(QuestionsTest, related_name='Вопрос', on_delete=models.CASCADE)
 
@@ -271,7 +271,7 @@ class CheckTest(models.Model):
 
 class QuestionsCheckTest(models.Model):
     question = models.ForeignKey(QuestionsTest, on_delete=models.CASCADE, verbose_name='Вопрос')
-    answer = models.CharField('Ответ', max_length=1000)
+    answer = models.CharField('Ответ', max_length=3000)
     user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик')
     poll = models.ForeignKey(Test, on_delete=models.CASCADE, verbose_name='Test')
     poll_check = models.ForeignKey(CheckTest, on_delete=models.CASCADE, default=None,

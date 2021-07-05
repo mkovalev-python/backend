@@ -700,7 +700,7 @@ class UploadUser(APIView):
 
             message = MIMEMultipart()
             message['Subject'] = 'Параметры для входа в систему опросов ТС'
-            message['From'] = 'mkovalev@hse.ru'
+            message['From'] = 'tspolls2021@gmail.com'
             message['To'] = row['email']
 
             html = """\
@@ -726,7 +726,7 @@ class UploadUser(APIView):
             message.attach(text)
 
             port = 587
-            smtp_server = "smtp.hse.ru"
+            smtp_server = "smtp.gmail.ru"
 
             context = ssl.create_default_context()
             context.check_hostname = False
@@ -737,7 +737,7 @@ class UploadUser(APIView):
                 server.starttls(context=context)
                 server.ehlo()
                 try:
-                    server.login('mkovalev', '!N7DU935')
+                    server.login('tspolls2021@gmail.com', '124578qwas')
                     server.sendmail(message['From'], message['To'], message.as_string())
                     server.quit()
                 except:
