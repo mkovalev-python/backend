@@ -140,8 +140,9 @@ class PostCreateUser(APIView):
             create_permission_for_user = PermissionUser(
                 permission_id=request.data['permission'],
                 username_id=request.data['username']).save()
-            create_rating_field = Rating(username_id=request.data['username'],
-                                         rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
+            if request.data['permission'] != 'Staff':
+                create_rating_field = Rating(username_id=request.data['username'],
+                                             rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
 
         else:
             return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
@@ -897,21 +898,38 @@ class AnaliticNew(APIView):
 
 def CreateStartInfo(response):
     """Добавление смен"""
-
-    SessionTC(number_session=0, name_session='Смена Персонала', active_session=None).save()
-    SessionTC(number_session=1, name_session='Смена 1', active_session=True).save()
-    SessionTC(number_session=2, name_session='Смена 2', active_session=False).save()
-    SessionTC(number_session=3, name_session='Смена 3', active_session=False).save()
-    SessionTC(number_session=4, name_session='Смена 4', active_session=False).save()
-    SessionTC(number_session=5, name_session='Смена 5', active_session=False).save()
+    try:
+        SessionTC(number_session=0, name_session='Смена Персонала', active_session=None).save()
+    except:
+        pass
+    try:
+        SessionTC(number_session=1, name_session='Смена 1', active_session=True).save()
+    except:
+        pass
+    try:
+        SessionTC(number_session=2, name_session='Смена 2', active_session=False).save()
+    except:
+        pass
+    try:
+        SessionTC(number_session=3, name_session='Смена 3', active_session=False).save()
+    except:
+        pass
+    try:
+        SessionTC(number_session=4, name_session='Смена 4', active_session=False).save()
+    except:
+        pass
+    try:
+        SessionTC(number_session=5, name_session='Смена 5', active_session=False).save()
+    except:
+        pass
 
     """Добавление команд"""
-    i = 4
+    i = 1
     while i < 26:
         if i == 0:
             Team(name='Staff').save()
         else:
-            team = Team(name='Команда '+str(i))
+            team = Team(name='Команда ' + str(i))
             team.save()
             for session in SessionTC.objects.all().exclude(number_session=0):
                 RatingTeam(team=team, session=session).save()
