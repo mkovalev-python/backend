@@ -245,7 +245,7 @@ class QuestionsTest(models.Model):
 
 
 class AnswersTest(models.Model):
-    answer = models.CharField('Ответ', null=False, max_length=255)
+    answer = models.CharField('Ответ', null=False, max_length=400)
     points = models.IntegerField('Баллы', default=0, null=False)
     question = models.ForeignKey(QuestionsTest, related_name='Вопрос', on_delete=models.CASCADE)
 
@@ -271,7 +271,7 @@ class CheckTest(models.Model):
 
 class QuestionsCheckTest(models.Model):
     question = models.ForeignKey(QuestionsTest, on_delete=models.CASCADE, verbose_name='Вопрос')
-    answer = models.CharField('Ответ', max_length=100)
+    answer = models.CharField('Ответ', max_length=1000)
     user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик')
     poll = models.ForeignKey(Test, on_delete=models.CASCADE, verbose_name='Test')
     poll_check = models.ForeignKey(CheckTest, on_delete=models.CASCADE, default=None,
