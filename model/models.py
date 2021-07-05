@@ -282,5 +282,5 @@ class QuestionsCheckTest(models.Model):
         return self.question.question
 
     class Meta:
-        verbose_name = 'Ответ на вопрос'
-        verbose_name_plural = 'Ответы на вопросы'
+        verbose_name = 'Ответ на вопрос Теста'
+        verbose_name_plural = 'Ответы на вопросы Теста'
