@@ -30,7 +30,7 @@ class Profile(models.Model):
 class Country(models.Model):
     """Модель городов России"""
 
-    country = models.CharField('Город', max_length=255, unique=True)
+    country = models.CharField('Город', max_length=500, unique=True)
 
     def __str__(self):
         return self.country
@@ -43,7 +43,7 @@ class Country(models.Model):
 class Team(models.Model):
     """Модель команд"""
 
-    name = models.CharField('Название команды', unique=True, max_length=255)
+    name = models.CharField('Название команды', unique=True, max_length=500)
 
     def __str__(self):
         return self.name
@@ -70,8 +70,8 @@ class PermissionUser(models.Model):
 class Permission(models.Model):
     """Модель ролей системы"""
 
-    name = models.CharField('Роли', unique=True, max_length=100)
-    slug = models.SlugField('Slug название', unique=True, max_length=100)
+    name = models.CharField('Роли', unique=True, max_length=500)
+    slug = models.SlugField('Slug название', unique=True, max_length=500)
 
     def __str__(self):
         return self.name
@@ -84,9 +84,9 @@ class Permission(models.Model):
 class Polls(models.Model):
     """Модель опросов"""
 
-    title = models.CharField('Заголовок', max_length=2505)
-    description = models.CharField('Описание', max_length=5100)
-    category = models.CharField('Категория', max_length=1000)
+    title = models.CharField('Заголовок', max_length=500)
+    description = models.CharField('Описание', max_length=500)
+    category = models.CharField('Категория', max_length=500)
     points = models.IntegerField('Баллы', default=10)
     latePosting = models.BooleanField('Отложная публикация?', default=False)
     datePosting = models.DateTimeField('Дата и время публикации', default=datetime.now())
@@ -105,8 +105,8 @@ class Questions(models.Model):
     """Модель вопросов и ответов"""
 
     poll = models.ForeignKey(Polls, on_delete=models.CASCADE)
-    question = models.CharField('Вопрос', max_length=2505, unique=False)
-    answer = models.CharField('Ответ', max_length=2505)
+    question = models.CharField('Вопрос', max_length=500, unique=False)
+    answer = models.CharField('Ответ', max_length=500)
 
     def __str__(self):
         return self.question
@@ -174,7 +174,7 @@ class PollsCheck(models.Model):
 
 class QuestionsCheck(models.Model):
     question = models.ForeignKey(Questions, on_delete=models.CASCADE, verbose_name='Вопрос')
-    answer = models.CharField('Ответ', max_length=1000)
+    answer = models.CharField('Ответ', max_length=500)
     user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик')
     poll = models.ForeignKey(Polls, on_delete=models.CASCADE, verbose_name='Опрос')
     poll_check = models.ForeignKey(PollsCheck, on_delete=models.CASCADE, default=None,
@@ -189,10 +189,10 @@ class QuestionsCheck(models.Model):
 
 
 class LogPoint(models.Model):
-    username = models.CharField('Пользователь', max_length=255)
+    username = models.CharField('Пользователь', max_length=500)
     points = models.IntegerField('Баллы', default=0)
     date = models.DateTimeField('Дата зачисления')
-    poll = models.CharField('Опрос', max_length=2505)
+    poll = models.CharField('Опрос', max_length=500)
     add = models.BooleanField('Зачисление', null=True)
 
     def __str__(self):
@@ -209,7 +209,7 @@ class FileUpload(models.Model):
 
 
 class Test(models.Model):
-    title = models.CharField('Заголовок теста', null=False, max_length=3055)
+    title = models.CharField('Заголовок теста', null=False, max_length=500)
     description = models.TextField('Описание теста')
     points = models.IntegerField('Баллы за прохождение')
     session = models.ForeignKey(SessionTC, on_delete=models.CASCADE, related_name='Смена', to_field='number_session')
@@ -233,7 +233,7 @@ class NumComp(models.Model):
 
 
 class QuestionsTest(models.Model):
-    question = models.CharField('Вопрос', null=False, max_length=3055)
+    question = models.CharField('Вопрос', null=False, max_length=500)
     test = models.ForeignKey(Test, related_name='Тест', on_delete=models.CASCADE)
 
     def __str__(self):
@@ -245,7 +245,7 @@ class QuestionsTest(models.Model):
 
 
 class AnswersTest(models.Model):
-    answer = models.CharField('Ответ', null=False, max_length=4000)
+    answer = models.CharField('Ответ', null=False, max_length=500)
     points = models.IntegerField('Баллы', default=0, null=False)
     question = models.ForeignKey(QuestionsTest, related_name='Вопрос', on_delete=models.CASCADE)
 
@@ -271,7 +271,7 @@ class CheckTest(models.Model):
 
 class QuestionsCheckTest(models.Model):
     question = models.ForeignKey(QuestionsTest, on_delete=models.CASCADE, verbose_name='Вопрос')
-    answer = models.CharField('Ответ', max_length=3000)
+    answer = models.CharField('Ответ', max_length=500)
     user_valuer = models.ForeignKey(Profile, on_delete=models.CASCADE, verbose_name='Оценщик')
     poll = models.ForeignKey(Test, on_delete=models.CASCADE, verbose_name='Test')
     poll_check = models.ForeignKey(CheckTest, on_delete=models.CASCADE, default=None,
