@@ -676,7 +676,7 @@ class UploadUser(APIView):
                 data={'username': row['email'].split('@')[0], 'password': password})
 
             """CREATE COUNTRY"""
-            if not Country.objects.filter(country=row['Город']).exist():
+            if Country.objects.filter(country=row['Город']).count() == 0:
                 Country(country=row['Город']).save()
 
             if serializer.is_valid():
