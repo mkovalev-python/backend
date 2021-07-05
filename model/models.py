@@ -13,6 +13,7 @@ class Profile(models.Model):
                                                                                                       'пользователя')
     first_name = models.CharField('Имя', max_length=100, null=False)
     last_name = models.CharField('Фамилия', max_length=100, null=False)
+    patronymic = models.CharField('Отчество', max_length=100, null=True)
     country = models.ForeignKey('Country', on_delete=models.CASCADE, null=False, to_field='country')
     birthday = models.DateField('Дата рождения', null=False)
     team = models.ForeignKey('Team', on_delete=models.CASCADE, to_field='name', verbose_name='Команда')

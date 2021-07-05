@@ -675,11 +675,16 @@ class UploadUser(APIView):
             serializer = UserSerializerWithToken(
                 data={'username': row['email'].split('@')[0], 'password': password})
 
+            """CREATE COUNTRY"""
+            if not Country.objects.filter(country=row['Город']).exist():
+                Country(country=row['Город']).save()
+
             if serializer.is_valid():
                 serializer.save()
                 create_info_for_user = Profile(
                     first_name=row['Имя'],
                     last_name=row['Фамилия'],
+                    patronymic=row['Отчество'],
                     country_id=row['Город'],
                     team_id=row['Команда'],
                     birthday='2021-05-01',
@@ -703,10 +708,20 @@ class UploadUser(APIView):
                     <html>
                         <head></head>
                         <body>
-                        <h4>Здравствуйте! Вы были зарегистрированы в системе опросов форума "Территория Смыслов".</h4>
+                        <h4>Добро пожаловать на «Территорию смыслов»!</h4>
+                        
+                        <p> На связи команда модераторов. На этой неделе вы станете участниками и соавторами сотен событий #ТСнавсегда.
+                        Элементы программы дополняет цифровая платформа форума. Здесь вы сможете оценивать спикеров «Диалогов на равных»,
+                        различные службы, других участников и даже себя. Платформа покажет динамику ваших компетенций, рейтинги команд.
+                        Обо всем функционале расскажем совсем скоро.</p><br>
+                        
+                        <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
+                         
                         
                         <span><b>Login:</b>  """ + row['email'].split('@')[0] + """</span><br>
-                        <span><b>Password:</b>  """ + password + """</span></body></html>"""
+                        <span><b>Password:</b>  """ + password + """</span><br>
+                        <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
+                        </body></html>"""
 
             text = MIMEText(html, 'html')
             message.attach(text)
