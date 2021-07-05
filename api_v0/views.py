@@ -725,14 +725,12 @@ class UploadUser(APIView):
             text = MIMEText(html, 'html')
             message.attach(text)
 
-            port = 587
-            smtp_server = "smtp.gmail.ru"
 
             context = ssl.create_default_context()
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE
 
-            with smtplib.SMTP(smtp_server, port) as server:
+            with smtplib.SMTP('smtp.gmail.com', 587) as server:
                 server.ehlo()
                 server.starttls(context=context)
                 server.ehlo()
