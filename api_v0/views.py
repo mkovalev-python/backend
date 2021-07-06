@@ -939,8 +939,8 @@ def CreateStartInfo(response):
         pass
 
     """Добавление команд"""
-    i = 0
-    while i < 26:
+    i = 21
+    while i < 40:
         if i == 0:
             Team(name='Staff').save()
         else:
