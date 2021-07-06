@@ -704,7 +704,7 @@ class UploadUser(APIView):
                 message['Subject'] = 'Параметры для входа в систему опросов ТС'
                 message['From'] = 'tspolls2021@gmail.com'
                 message['To'] = row['email']
-                message['BCC'] = 'mkovalevhse@yandex.ru'
+                # message['BCC'] = 'mkovalevhse@yandex.ru'
 
                 html = """\
                         <html>
