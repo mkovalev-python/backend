@@ -667,7 +667,6 @@ class UploadUser(APIView):
         file = FileUpload.objects.all().order_by('-id')[:1][0]
         exel_data_df = pandas.read_excel(file.file.path)
         for index, row in exel_data_df.iterrows():
-            time.sleep(15)
             if row['email'] != '' or None:
                 password = ''
                 for x in range(8):
