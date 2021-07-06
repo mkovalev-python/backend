@@ -457,7 +457,7 @@ class GetPollsParticipant(APIView):
         data = dict.fromkeys(list_category)
         for i in list_category:
 
-            polls = get_all_polls.filter(category=i, session_id=Profile.objects.get(id=user_id).session_id)
+            polls = get_all_polls.filter(category=i, in_archive=False, latePosting=False, session_id=Profile.objects.get(id=user_id).session_id)
             serializer = PollsSerializer(polls, many=True).data
             if polls.count() == 0:
                 continue
