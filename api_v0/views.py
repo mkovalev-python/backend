@@ -7,7 +7,7 @@ import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from django.db.models import Sum
-
+from datetime import datetime, timedelta
 import pandas
 from django.http import FileResponse
 from django.core import serializers
@@ -418,8 +418,11 @@ class CheckPollTeam(APIView):
 
     @staticmethod
     def post(request):
-
-        if request.data['type'] == 'other' or request.data['type'] == 'test':
+        try:
+            type = request.data['type']
+        except KeyError:
+            type = None
+        if type == 'other' or type == 'test':
             save_poll(request.data)
             return Response(status=status.HTTP_200_OK)
         else:
@@ -457,7 +460,8 @@ class GetPollsParticipant(APIView):
         data = dict.fromkeys(list_category)
         for i in list_category:
 
-            polls = get_all_polls.filter(category=i, in_archive=False, latePosting=False, session_id=Profile.objects.get(id=user_id).session_id)
+            polls = get_all_polls.filter(category=i, in_archive=False, latePosting=False,
+                                         session_id=Profile.objects.get(id=user_id).session_id)
             serializer = PollsSerializer(polls, many=True).data
             if polls.count() == 0:
                 continue
@@ -728,7 +732,6 @@ class UploadUser(APIView):
                 text = MIMEText(html, 'html')
                 message.attach(text)
 
-
                 context = ssl.create_default_context()
                 context.check_hostname = False
                 context.verify_mode = ssl.CERT_NONE
@@ -832,8 +835,10 @@ class GetTests(APIView):
                          'team': profile.team_id,
                          'session': profile.session_id}
             list_rating_users.append(data_user)
+        list_rating_users = sorted(list_rating_users, key=lambda k: k['num'])
         """Рейтинг команд в сессии"""
-        rating_team = RatingTeam.objects.filter(session_id=int(request.query_params.__getitem__('session')))
+        rating_team = RatingTeam.objects.filter(session_id=int(request.query_params.__getitem__('session'))).order_by(
+            'rating')
         i = 1
         list_rating_team = []
         for team in rating_team:
@@ -876,12 +881,12 @@ class AnaliticNew(APIView):
                 log_data = {
                     'fio': log.username,
                     'points': log.points,
-                    'date': log.date.strftime('%d/%m/%Y %H:%M:%S'),
+                    'date': (log.date + timedelta(hours=3)).strftime('%d/%m/%Y %H:%M:%S'),
                     'polls_test': log.poll
                 }
                 logger_list.append(log_data)
-        """Сбор данных для рейтинга всех участников (Таблица 2 в первой карточке"""
-        queryset_rating_all_users = Rating.objects.all()
+        """Сбор данных для рейтинга всех участников (Таблица 2 в первой карточке)"""
+        queryset_rating_all_users = Rating.objects.all().order_by('rating')
         rating_user = []
         if queryset_rating_all_users.count() != 0:
             for user in queryset_rating_all_users:
@@ -895,7 +900,7 @@ class AnaliticNew(APIView):
                 rating_user.append(rating_user_data)
 
         """Сбор данных для рейтинга всех команд (Таблица 3 в первой карточке)"""
-        queryset_rating_all_teams = RatingTeam.objects.all()
+        queryset_rating_all_teams = RatingTeam.objects.all().order_by('rating')
         rating_team = []
         if queryset_rating_all_teams.count() != 0:
             for team in queryset_rating_all_teams:
@@ -939,15 +944,59 @@ def CreateStartInfo(response):
         pass
 
     """Добавление команд"""
-    i = 21
-    while i < 40:
-        if i == 0:
-            Team(name='Staff').save()
+    i = 0
+    while i < 56:
+        if Team.objects.filter(name='Команда ' + str(i)).count() == 0:
+            if i == 0:
+                Team(name='Staff').save()
+            else:
+                team = Team(name='Команда ' + str(i))
+                team.save()
+                for session in SessionTC.objects.all().exclude(number_session=0):
+                    RatingTeam(team=team, session=session).save()
+            i += 1
         else:
-            team = Team(name='Команда ' + str(i))
-            team.save()
-            for session in SessionTC.objects.all().exclude(number_session=0):
-                RatingTeam(team=team, session=session).save()
-        i += 1
+            i += 1
 
     return HttpResponse("Here's the text of the Web page.")
+
+
+class GetUsersInfo(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        profile = Profile.objects.get(username=User.objects.get(username=request.query_params.__getitem__('username')))
+        list_polls = []
+        list_test = []
+        i = 1
+        for el in PollsCheck.objects.filter(user_valuer_id=profile.username.id):
+            list_polls.append({'num': i, 'name': el.poll.title})
+            i += 1
+        j = 1
+        for el in CheckTest.objects.filter(user_id=profile.username.id):
+            list_test.append({'num': j,'name':el.test.title})
+            j += 1
+        try:
+            data = {'FirstLastName': profile.first_name + ' ' + profile.last_name,
+                    'username': str(profile.username),
+                    'birthday': profile.birthday.strftime('%Y-%m-%d'),
+                    'dataJoin': (profile.username.date_joined + timedelta(hours=3)).strftime('%d/%m/%Y %H:%M:%S'),
+                    'country': str(profile.country),
+                    'team': str(profile.team),
+                    'session': str(profile.session),
+                    'points': str(Rating.objects.get(username_id=profile.username).points),
+                    'name_polls': list_polls}
+        except:
+            data = {'FirstLastName': profile.first_name + ' ' + profile.last_name,
+                    'username': str(profile.username),
+                    'birthday': profile.birthday.strftime('%Y-%m-%d'),
+                    'dataJoin': (profile.username.date_joined + timedelta(hours=3)).strftime('%d/%m/%Y %H:%M:%S'),
+                    'country': str(profile.country),
+                    'team': str(profile.team),
+                    'session': str(profile.session),
+                    'points': 'Вы администратор!',
+                    'name_polls': list_polls,
+                    'name_test': list_test}
+
+        return Response(data)
