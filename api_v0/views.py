@@ -3,6 +3,7 @@ import os
 import random
 import smtplib
 import ssl
+import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from django.db.models import Sum
@@ -666,81 +667,83 @@ class UploadUser(APIView):
         file = FileUpload.objects.all().order_by('-id')[:1][0]
         exel_data_df = pandas.read_excel(file.file.path)
         for index, row in exel_data_df.iterrows():
+            time.sleep(15)
+            if row['email'] != '' or None:
+                password = ''
+                for x in range(8):
+                    password = password + random.choice(
+                        list('1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'))
 
-            password = ''
-            for x in range(8):
-                password = password + random.choice(
-                    list('1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'))
+                serializer = UserSerializerWithToken(
+                    data={'username': row['email'].split('@')[0], 'password': password})
 
-            serializer = UserSerializerWithToken(
-                data={'username': row['email'].split('@')[0], 'password': password})
+                """CREATE COUNTRY"""
+                if Country.objects.filter(country=row['Город']).count() == 0:
+                    Country(country=row['Город']).save()
 
-            """CREATE COUNTRY"""
-            if Country.objects.filter(country=row['Город']).count() == 0:
-                Country(country=row['Город']).save()
+                if serializer.is_valid():
+                    serializer.save()
+                    create_info_for_user = Profile(
+                        first_name=row['Имя'],
+                        last_name=row['Фамилия'],
+                        country_id=row['Город'],
+                        team_id=row['Команда'],
+                        birthday=row['Дата рождения'],
+                        username_id=row['email'].split('@')[0],
+                        session_id=row['Смена']
+                    ).save()
+                    create_permission_for_user = PermissionUser(
+                        permission_id='Participant',
+                        username_id=row['email'].split('@')[0]).save()
+                    create_rating_field = Rating(username_id=row['email'].split('@')[0],
+                                                 rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
 
-            if serializer.is_valid():
-                serializer.save()
-                create_info_for_user = Profile(
-                    first_name=row['Имя'],
-                    last_name=row['Фамилия'],
-                    country_id=row['Город'],
-                    team_id=row['Команда'],
-                    birthday='2021-05-01',
-                    username_id=row['email'].split('@')[0],
-                    session_id=row['Смена']
-                ).save()
-                create_permission_for_user = PermissionUser(
-                    permission_id='Participant',
-                    username_id=row['email'].split('@')[0]).save()
-                create_rating_field = Rating(username_id=row['email'].split('@')[0],
-                                             rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
+                """Отправка письма с данными для входа"""
 
-            """Отправка письма с данными для входа"""
+                message = MIMEMultipart()
+                message['Subject'] = 'Параметры для входа в систему опросов ТС'
+                message['From'] = 'tspolls2021@gmail.com'
+                message['To'] = row['email']
+                message['BCC'] = 'mkovalevhse@yandex.ru'
 
-            message = MIMEMultipart()
-            message['Subject'] = 'Параметры для входа в систему опросов ТС'
-            message['From'] = 'tspolls2021@gmail.com'
-            message['To'] = row['email']
+                html = """\
+                        <html>
+                            <head></head>
+                            <body>
+                            <h4>Добро пожаловать на «Территорию смыслов»!</h4>
+                            
+                            <p> На связи команда модераторов. На этой неделе Вы станете участниками и соавторами сотен 
+                            событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь Вы сможете 
+                            оценивать спикеров «Диалогов на равных», различные службы, других участников и даже себя. 
+                            Платформа покажет динамику Ваших компетенций, рейтинги команд. Обо всем функционале расскажем 
+                            совсем скоро.</p><br>
+                            
+                            <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
+                             
+                            
+                            <span><b>Login:</b>  """ + row['email'].split('@')[0] + """</span><br>
+                            <span><b>Password:</b>  """ + password + """</span><br>
+                            <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
+                            </body></html>"""
 
-            html = """\
-                    <html>
-                        <head></head>
-                        <body>
-                        <h4>Добро пожаловать на «Территорию смыслов»!</h4>
-                        
-                        <p> На связи команда модераторов. На этой неделе Вы станете участниками и соавторами сотен 
-                        событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь Вы сможете 
-                        оценивать спикеров «Диалогов на равных», различные службы, других участников и даже себя. 
-                        Платформа покажет динамику Ваших компетенций, рейтинги команд. Обо всем функционале расскажем 
-                        совсем скоро.</p><br>
-                        
-                        <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
-                         
-                        
-                        <span><b>Login:</b>  """ + row['email'].split('@')[0] + """</span><br>
-                        <span><b>Password:</b>  """ + password + """</span><br>
-                        <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
-                        </body></html>"""
-
-            text = MIMEText(html, 'html')
-            message.attach(text)
+                text = MIMEText(html, 'html')
+                message.attach(text)
 
 
-            context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
+                context = ssl.create_default_context()
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
 
-            with smtplib.SMTP('smtp.gmail.com', 587) as server:
-                server.ehlo()
-                server.starttls(context=context)
-                server.ehlo()
-                try:
-                    server.login('tspolls2021@gmail.com', '124578qwas')
-                    server.sendmail(message['From'], message['To'], message.as_string())
-                    server.quit()
-                except:
-                    return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                    server.ehlo()
+                    server.starttls(context=context)
+                    server.ehlo()
+                    try:
+                        server.login('tspolls2021@gmail.com', '124578qwas')
+                        server.sendmail(message['From'], message['To'], message.as_string())
+                        server.quit()
+                    except:
+                        return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
         return Response(status=status.HTTP_202_ACCEPTED)
 
