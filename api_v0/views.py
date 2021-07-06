@@ -687,7 +687,7 @@ class UploadUser(APIView):
                         first_name=row['Имя'],
                         last_name=row['Фамилия'],
                         country_id=row['Город'],
-                        team_id=row['Команда'],
+                        team_id='Команда ' + row['Команда'],
                         birthday=row['Дата рождения'],
                         username_id=row['email'].split('@')[0],
                         session_id=row['Смена']
