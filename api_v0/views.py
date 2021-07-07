@@ -854,7 +854,7 @@ class GetTests(APIView):
         df = pd.DataFrame(list_elements_table)
         df2 = pd.DataFrame(list_rating_users)
         df3 = pd.DataFrame(list_rating_team)
-        name = 'Отчет' + datetime.datetime.now().strftime("%d-%m-%Y %H:%M") + '.xlsx'
+        name = 'Отчет.xlsx'
         writer = pd.ExcelWriter(MEDIA_ROOT + '/file_excel/' + name, engine='xlsxwriter')
         df.to_excel(writer, sheet_name='test')
         df2.to_excel(writer, sheet_name='rating_user')
