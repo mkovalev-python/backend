@@ -326,7 +326,7 @@ class MovePolls(APIView):
                         poll_last.save()
                 poll.latePosting = False
                 poll.in_archive = False
-                poll.datePosting = datetime.datetime.now()
+                poll.datePosting = datetime.now()
                 poll.save()
             return Response(status=status.HTTP_200_OK)
 
