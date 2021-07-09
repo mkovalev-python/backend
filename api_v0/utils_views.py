@@ -87,8 +87,10 @@ def points_my_team(team, poll, s_points, user):
             null_users += 1
 
     n_users = team_count.count() - null_users
-
-    points = int(s_points / n_users)
+    try:
+        points = int(s_points / n_users)
+    except:
+        points = 0
 
     save_points = Rating.objects.get(username_id=user.username_id)
     save_points.points += points
