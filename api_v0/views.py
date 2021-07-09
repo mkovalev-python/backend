@@ -779,8 +779,9 @@ class GetTests(APIView):
 
     @staticmethod
     def get(request):
+        team = Team.objects.get(id=request.query_params.__getitem__('team'))
         users = Profile.objects.filter(session_id=int(request.query_params.__getitem__('session')),
-                                       team_id='Команда ' + request.query_params.__getitem__('team'))
+                                       team_id=team.name)
         list_elements_table = []
         list_rating_users = []
         for profile in users:
