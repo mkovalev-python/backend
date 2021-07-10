@@ -810,7 +810,7 @@ class GetTests(APIView):
                     for j in get_summ_points:
                         summ += j.point
                     data[('after' + str(el))] = summ
-                    data[('difference' + str(el))] = data.get('to' + str(el)) - data.get('after' + str(el))
+                    data[('difference' + str(el))] = data.get('after' + str(el)) - data.get('to' + str(el))
                 elif tests.__len__() == 0:
                     data[('to' + str(el))] = 0
                     data[('after' + str(el))] = 0
@@ -824,7 +824,7 @@ class GetTests(APIView):
                         summ += j.point
                     data[('to' + str(el))] = summ
                     data[('after' + str(el))] = 0
-                    data[('difference' + str(el))] = data.get('to' + str(el)) - data.get('after' + str(el))
+                    data[('difference' + str(el))] = data.get('after' + str(el)) - data.get('to' + str(el))
 
             list_elements_table.append(data)
 
@@ -987,7 +987,8 @@ class GetUsersInfo(APIView):
                     'team': str(profile.team),
                     'session': str(profile.session),
                     'points': str(Rating.objects.get(username_id=profile.username).points),
-                    'name_polls': list_polls}
+                    'name_polls': list_polls,
+                    'name_test': list_test}
         except:
             data = {'FirstLastName': profile.first_name + ' ' + profile.last_name,
                     'username': str(profile.username),
@@ -1001,3 +1002,61 @@ class GetUsersInfo(APIView):
                     'name_test': list_test}
 
         return Response(data)
+
+
+class PullPoints(APIView):
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser)
+
+    @staticmethod
+    def get(request):
+        pull_points = int(request.query_params.__getitem__('points'))
+        username = request.query_params.__getitem__('username')
+
+        rating_points = Rating.objects.get(username=username)
+        rating_points.points += pull_points
+        rating_points.save()
+
+        rating_team = RatingTeam.objects.get(team_id=rating_points.username.profile.team.name,
+                                             session_id=rating_points.username.profile.session_id)
+        rating_team.points += pull_points
+        rating_team.save()
+
+        return Response({'points': rating_points.points})
+
+class SearchUser(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    @staticmethod
+    def get(request):
+        name = request.query_params.__getitem__('value')
+        name = name.split(' ')
+        if name.__len__() > 1:
+            get_users = Profile.objects.filter(last_name=name[0])
+            if get_users.count() == 0:
+                get_users = Profile.objects.filter(first_name=name[0], last_name=name[1])
+            else:
+                get_users = Profile.objects.filter(first_name=name[1],last_name=name[0])
+        else:
+            get_users = Profile.objects.filter(last_name=name[0])
+            if get_users.count() == 0:
+                get_users = Profile.objects.filter(first_name=name[0])
+
+        data = []
+        for username in get_users:
+            dict_user = {}
+            user_info = Profile.objects.get(username_id=username.username)
+            user_permission = PermissionUser.objects.get(username_id=username.username)
+
+            dict_user = {
+                'username': str(username.username),
+                'first_name': user_info.first_name,
+                'last_name': user_info.last_name,
+                'birthday': str(user_info.birthday),
+                'country': user_info.country_id,
+                'team': user_info.team_id,
+                'permission': user_permission.permission.name
+            }
+
+            data.append(dict_user)
+        return Response(data)
+
