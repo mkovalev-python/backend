@@ -968,7 +968,7 @@ class AnaliticNew(APIView):
         writer.save()
 
         data = {'logger': logger_list, 'rating_user': rating_user, 'rating_team': rating_team,
-                'link': 'http://127.0.0.1:8000/media/file_excel/' + name}
+                'link': 'http://194.58.108.226:8000/media/file_excel/' + name}
         return Response(data)
 
 
