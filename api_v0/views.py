@@ -471,7 +471,7 @@ class CheckPollTeam(APIView):
             poll.save()
 
             for el in request.data['answers']:
-                get_id_question = Questions.objects.get(question=el).id
+                get_id_question = Questions.objects.get(question=el,poll_id=request.data['id_poll']).id
                 QuestionsCheck(poll_id=request.data['id_poll'],
                                user_valuer_id=request.data['user_id'],
                                answer=request.data['answers'][el],
