@@ -127,7 +127,7 @@ def save_poll(params):
         poll.save()
 
         for el in params['answers']:
-            get_id_question = Questions.objects.get(question=el).id
+            get_id_question = Questions.objects.get(question=el, poll_id=params['id_poll']).id
             QuestionsCheck(poll_id=params['id_poll'],
                            user_valuer_id=params['user_id'],
                            answer=params['answers'][el],
