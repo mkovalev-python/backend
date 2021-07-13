@@ -41,7 +41,6 @@ def general_save(request):
               category=request['values']['category'],
               points=request['values']['points'],
               latePosting=request['latePosting'],
-              datePosting=request['values']['datePosting'],
               session_id=request['values']['session']).save()
     else:
         Polls(title=request['values']['title'],

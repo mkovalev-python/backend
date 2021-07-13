@@ -84,7 +84,7 @@ class PollsSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Polls
-        fields = ('id', 'title', 'description', 'points', 'session')
+        fields = ('id', 'title', 'description', 'points', 'session','datePosting')
 
 
 class QuestionsSerializer(serializers.ModelSerializer):

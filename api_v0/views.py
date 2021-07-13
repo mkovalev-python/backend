@@ -279,6 +279,29 @@ class MovePolls(APIView):
         try:
             if request.data['comp']:
                 test = Test.objects.get(id=request.data['id'])
+                if request.data['type'] == 'copy':
+                    # toDo: допилить копирование
+                    test_copy = Test(in_archive=False,
+                                     description=test.description,
+                                     latePosting=True,
+                                     num_comp_id=test.num_comp_id,
+                                     points=test.points,
+                                     session_id=SessionTC.objects.get(active_session=True).number_session,
+                                     title=test.title
+                                     )
+                    test_copy.save()
+                    '''Копирование вопросов и ответов'''
+                    questions = QuestionsTest.objects.filter(test_id=test.id)
+                    for question in questions:
+                        copy_question = QuestionsTest(question=question.question, test_id=test_copy.id)
+                        copy_question.save()
+
+                        answers = AnswersTest.objects.filter(question_id=question.id)
+                        for answer in answers:
+                            copy_answer = AnswersTest(answer=answer.answer, points=answer.points,
+                                                      question_id=copy_question.id)
+                            copy_answer.save()
+                    return Response(status=status.HTTP_200_OK)
                 if request.data['type'] == 'archive':
                     test.in_archive = True
                     test.save()
@@ -291,6 +314,7 @@ class MovePolls(APIView):
                 return Response(status=status.HTTP_200_OK)
             else:
                 poll = Polls.objects.get(id=request.data['id'])
+
                 if request.data['type'] == 'archive':
                     if poll.category == 'participant' and poll.latePosting == False:
                         get_points(poll)
@@ -311,6 +335,22 @@ class MovePolls(APIView):
                 return Response(status=status.HTTP_200_OK)
         except:
             poll = Polls.objects.get(id=request.data['id'])
+            if request.data['type'] == 'copy':
+                poll_copy = Polls(category=poll.category,
+                                  datePosting=datetime.now(),
+                                  description=poll.description,
+                                  in_archive=False,
+                                  latePosting=True,
+                                  points=poll.points,
+                                  session_id=SessionTC.objects.get(active_session=True).number_session,
+                                  title=poll.title)
+                poll_copy.save()
+                questions = Questions.objects.filter(poll_id=poll.id)
+                for question in questions:
+                    question_copy = Questions(question=question.question,
+                                              answer=question.answer,
+                                              poll_id=poll_copy.id)
+                    question_copy.save()
             if request.data['type'] == 'archive':
                 if poll.category == 'participant' and poll.latePosting == False:
                     get_points(poll)
@@ -677,6 +717,8 @@ class UploadUser(APIView):
                     password = password + random.choice(
                         list('1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'))
 
+                if User.objects.filter(username=row['email'].split('@')[0]).exists():
+                    continue
                 serializer = UserSerializerWithToken(
                     data={'username': row['email'].split('@')[0], 'password': password})
 
@@ -705,7 +747,7 @@ class UploadUser(APIView):
 
                 message = MIMEMultipart()
                 message['Subject'] = 'Параметры для входа в систему опросов ТС'
-                message['From'] = 'tspolls2021@gmail.com'
+                message['From'] = 'support@tspolls.ru'
                 message['To'] = row['email']
                 # message['BCC'] = 'mkovalevhse@yandex.ru'
 
@@ -715,11 +757,13 @@ class UploadUser(APIView):
                             <body>
                             <h4>Добро пожаловать на «Территорию смыслов»!</h4>
                             
-                            <p> На связи команда модераторов. На этой неделе Вы станете участниками и соавторами сотен 
-                            событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь Вы сможете 
-                            оценивать спикеров «Диалогов на равных», различные службы, других участников и даже себя. 
-                            Платформа покажет динамику Ваших компетенций, рейтинги команд. Обо всем функционале расскажем 
-                            совсем скоро.</p><br>
+                            <p>На связи команда модераторов. На этой неделе вы станете участниками и соавторами сотен 
+                            событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь вы 
+                            сможете оценивать спикеров «Диалогов на равных», различные службы, других участников и даже 
+                            себя. Платформа покажет динамику ваших компетенций, рейтинги команд. Обо всем функционале 
+                            расскажем совсем скоро.</p><br>
+                            <p>Если с платформой возникнут проблемы, пишите нашей службе поддержки: support@tspolls.ru</p><br>
+
                             
                             <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
                              
@@ -736,12 +780,12 @@ class UploadUser(APIView):
                 context.check_hostname = False
                 context.verify_mode = ssl.CERT_NONE
 
-                with smtplib.SMTP('smtp.gmail.com', 587) as server:
+                with smtplib.SMTP('mail.nic.ru', 587) as server:
                     server.ehlo()
                     server.starttls(context=context)
                     server.ehlo()
                     try:
-                        server.login('tspolls2021@gmail.com', '124578qwas')
+                        server.login('support@tspolls.ru', 'Prosto2021')
                         server.sendmail(message['From'], message['To'], message.as_string())
                         server.quit()
                     except:
@@ -899,6 +943,7 @@ class AnaliticNew(APIView):
                     'session': user.username.profile.session_id
                 }
                 rating_user.append(rating_user_data)
+        df = pd.DataFrame(rating_user)
 
         """Сбор данных для рейтинга всех команд (Таблица 3 в первой карточке)"""
         queryset_rating_all_teams = RatingTeam.objects.all().order_by('rating')
@@ -913,7 +958,17 @@ class AnaliticNew(APIView):
                 }
                 rating_team.append(rating_team_data)
 
-        data = {'logger': logger_list, 'rating_user': rating_user, 'rating_team': rating_team}
+        df2 = pd.DataFrame(rating_team)
+        df3 = pd.DataFrame(logger_list)
+        name = 'ОтчетJ.xlsx'
+        writer = pd.ExcelWriter(MEDIA_ROOT + '/file_excel/' + name, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='rating_team')
+        df2.to_excel(writer, sheet_name='rating_user')
+        df3.to_excel(writer, sheet_name='logger')
+        writer.save()
+
+        data = {'logger': logger_list, 'rating_user': rating_user, 'rating_team': rating_team,
+                'link': 'http://127.0.0.1:8000/media/file_excel/' + name}
         return Response(data)
 
 
@@ -976,7 +1031,7 @@ class GetUsersInfo(APIView):
             i += 1
         j = 1
         for el in CheckTest.objects.filter(user_id=profile.username.id):
-            list_test.append({'num': j,'name':el.test.title})
+            list_test.append({'num': j, 'name': el.test.title})
             j += 1
         try:
             data = {'FirstLastName': profile.first_name + ' ' + profile.last_name,
@@ -1023,6 +1078,7 @@ class PullPoints(APIView):
 
         return Response({'points': rating_points.points})
 
+
 class SearchUser(APIView):
     permission_classes = (permissions.IsAuthenticated,)
 
@@ -1031,15 +1087,15 @@ class SearchUser(APIView):
         name = request.query_params.__getitem__('value')
         name = name.split(' ')
         if name.__len__() > 1:
-            get_users = Profile.objects.filter(last_name=name[0])
+            get_users = Profile.objects.filter(last_name=name[0].title())
             if get_users.count() == 0:
-                get_users = Profile.objects.filter(first_name=name[0], last_name=name[1])
+                get_users = Profile.objects.filter(first_name=name[0].title(), last_name=name[1].title())
             else:
-                get_users = Profile.objects.filter(first_name=name[1],last_name=name[0])
+                get_users = Profile.objects.filter(first_name=name[1].title(), last_name=name[0].title())
         else:
-            get_users = Profile.objects.filter(last_name=name[0])
+            get_users = Profile.objects.filter(last_name=name[0].title())
             if get_users.count() == 0:
-                get_users = Profile.objects.filter(first_name=name[0])
+                get_users = Profile.objects.filter(first_name=name[0].title())
 
         data = []
         for username in get_users:
@@ -1059,4 +1115,3 @@ class SearchUser(APIView):
 
             data.append(dict_user)
         return Response(data)
-
