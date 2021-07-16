@@ -3,7 +3,7 @@ from rest_framework import serializers
 from rest_framework.settings import api_settings
 
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
-    LogPoint, PollsCheck, QuestionsCheck, RatingTeam, Test
+    LogPoint, PollsCheck, QuestionsCheck, RatingTeam, Test, QuestionsCheckTest
 
 
 class ProfileSerializer(serializers.ModelSerializer):
@@ -167,4 +167,12 @@ class TestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Test
+        fields = '__all__'
+
+
+class QuestionsCheckSerializerTest(serializers.ModelSerializer):
+    """Сериалайзер пройденных вопросов"""
+
+    class Meta:
+        model = QuestionsCheckTest
         fields = '__all__'

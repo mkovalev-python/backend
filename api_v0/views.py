@@ -6,6 +6,8 @@ import ssl
 import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from itertools import chain
+
 from django.db.models import Sum
 from datetime import datetime, timedelta
 import pandas
@@ -27,7 +29,8 @@ from model.models import PermissionUser, Profile, Permission, Team, Country, Pol
     QuestionsCheckTest
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
     CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer, \
-    LogPointSerializer, QuestionsSerializer, QuestionsCheckSerializer, RatingTeamSerializer, TestSerializer
+    LogPointSerializer, QuestionsSerializer, QuestionsCheckSerializer, RatingTeamSerializer, TestSerializer, \
+    QuestionsCheckSerializerTest
 import pandas as pd
 
 
@@ -302,6 +305,23 @@ class MovePolls(APIView):
                                                       question_id=copy_question.id)
                             copy_answer.save()
                     return Response(status=status.HTTP_200_OK)
+                if request.data['type'] == 'report':
+                    get_answer = QuestionsCheckTest.objects.filter(poll_id=test.id)
+                    listAnswers = []
+                    for answer in get_answer:
+                        data={
+                            'ФИО': answer.user_valuer.first_name + ' ' + answer.user_valuer.last_name,
+                            'Вопрос': answer.question.question,
+                            'Ответ': answer.answer
+                        }
+                        listAnswers.append(data)
+                    df3 = pd.DataFrame(listAnswers)
+                    name = 'report.xlsx'
+                    writer = pd.ExcelWriter(MEDIA_ROOT + '/file_excel/' + name, engine='xlsxwriter')
+                    df3.to_excel(writer, sheet_name='report')
+                    writer.save()
+
+                    return Response({'link': 'http://127.0.0.1:8000/media/file_excel/' + name})
                 if request.data['type'] == 'archive':
                     test.in_archive = True
                     test.save()
@@ -351,6 +371,25 @@ class MovePolls(APIView):
                                               answer=question.answer,
                                               poll_id=poll_copy.id)
                     question_copy.save()
+
+            if request.data['type'] == 'report':
+                get_answer = QuestionsCheck.objects.filter(poll_id=poll.id)
+                listAnswers = []
+                for answer in get_answer:
+                    data = {
+                        'ФИО': answer.user_valuer.first_name + ' ' + answer.user_valuer.last_name,
+                        'Вопрос': answer.question.question,
+                        'Ответ': answer.answer
+                    }
+                    listAnswers.append(data)
+                df3 = pd.DataFrame(listAnswers)
+                name = 'report.xlsx'
+                writer = pd.ExcelWriter(MEDIA_ROOT + '/file_excel/' + name, engine='xlsxwriter')
+                df3.to_excel(writer, sheet_name='report')
+                writer.save()
+
+                return Response({'link': 'http://194.58.108.226:8000/media/file_excel/' + name})
+
             if request.data['type'] == 'archive':
                 if poll.category == 'participant' and poll.latePosting == False:
                     get_points(poll)
@@ -471,7 +510,7 @@ class CheckPollTeam(APIView):
             poll.save()
 
             for el in request.data['answers']:
-                get_id_question = Questions.objects.get(question=el,poll_id=request.data['id_poll']).id
+                get_id_question = Questions.objects.get(question=el, poll_id=request.data['id_poll']).id
                 QuestionsCheck(poll_id=request.data['id_poll'],
                                user_valuer_id=request.data['user_id'],
                                answer=request.data['answers'][el],
@@ -1115,3 +1154,5 @@ class SearchUser(APIView):
 
             data.append(dict_user)
         return Response(data)
+
+
