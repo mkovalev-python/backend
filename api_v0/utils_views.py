@@ -28,8 +28,11 @@ def save_poll_all(request):
         str_answer = ''
         for answer in question['answers']:
             str_answer += '|' + answer['answer']
-
-        save_question_and_answer(request, str_answer, question['question'])
+        try:
+            freeAnswer = question['freeAnswer']
+        except KeyError:
+            freeAnswer = False
+        save_question_and_answer(request, str_answer, question['question'], freeAnswer)
 
     return status.HTTP_201_CREATED
 
@@ -50,11 +53,12 @@ def general_save(request):
               session_id=request['values']['session']).save()
 
 
-def save_question_and_answer(request, answer, question):
+def save_question_and_answer(request, answer, question, freeAnswer):
     Questions(poll_id=Polls.objects.get(title=request['info']['values']['title'],
                                         description=request['info']['values']['description']).id,
               question=question,
-              answer=answer).save()
+              answer=answer,
+              freeAnswer=freeAnswer).save()
 
 
 def rating():
@@ -94,7 +98,7 @@ def points_my_team(team, poll, s_points, user):
     save_points = Rating.objects.get(username_id=user.username_id)
     save_points.points += points
     save_points.save()
-    log_point(points, poll.id, user.id, True,None)
+    log_point(points, poll.id, user.id, True, None)
 
 
 def save_poll(params):
@@ -109,7 +113,8 @@ def save_poll(params):
                                answer=params['answers'][el],
                                question_id=get_id_question,
                                poll_check_id=test.id,
-                               point=AnswersTest.objects.get(question_id=get_id_question, answer=params['answers'][el]).points).save()
+                               point=AnswersTest.objects.get(question_id=get_id_question,
+                                                             answer=params['answers'][el]).points).save()
 
         add_points_for_user = Rating.objects.get(
             username_id=Profile.objects.get(id=params['user_id']).username_id)
@@ -138,7 +143,7 @@ def save_poll(params):
             username_id=Profile.objects.get(id=params['user_id']).username_id)
         add_points_for_user.points += Polls.objects.get(id=params['id_poll']).points
         add_points_for_user.save()
-        log_point(Polls.objects.get(id=params['id_poll']).points, params['id_poll'], params['user_id'], True,None)
+        log_point(Polls.objects.get(id=params['id_poll']).points, params['id_poll'], params['user_id'], True, None)
         """Формирование рейтинга команды"""
         get_user = Profile.objects.get(id=params['user_id'])
         add_point_team = RatingTeam.objects.get(team_id=get_user.team_id, session_id=get_user.session_id)
@@ -178,6 +183,7 @@ def add_points(req, poll):
         add_point_team.points += poll.poll.points
         add_point_team.save()
 
+
 def log_point(points, poll_id, user_id, bool_add, type):
     """Функция логгирования баллов"""
     if type == 'test':
@@ -186,6 +192,40 @@ def log_point(points, poll_id, user_id, bool_add, type):
         poll = Polls.objects.get(id=poll_id).title
     user = Profile.objects.get(id=user_id)
     LogPoint(points=points, date=datetime.now(), add=bool_add, poll=poll, username=user.first_name
-                                                                                         + ' ' +
-                                                                                         user.last_name).save()
+                                                                                   + ' ' +
+                                                                                   user.last_name).save()
     return print('Баллы залогированы')
+
+
+def countAnswers(answers, id, test_or_poll):
+    if test_or_poll == 'poll':
+        get_questions = Questions.objects.filter(poll_id=id)
+        dict_questions = {}
+        for question in get_questions:
+            dict_answers = {}
+            a = question.answer.split('|')
+            if a.__len__() == 1:
+                answersss = a
+            else:
+                answersss = a[1:]
+            for answer in answersss:
+                dict_answers[answer] = 0
+            dict_questions[question.question] = dict_answers
+
+        for answer in answers:
+            dict_questions[answer.question.question][answer.answer] += 1
+
+    else:
+        get_questions = QuestionsTest.objects.filter(test_id=id)
+        dict_questions = {}
+        for question in get_questions:
+            answerss = AnswersTest.objects.filter(question_id=question.id)
+            dict_answers = {}
+            for answer in answerss:
+                dict_answers[answer.answer] = 0
+            dict_questions[question.question] = dict_answers
+
+        for answer in answers:
+            dict_questions[answer.question.question][answer.answer] += 1
+
+    return dict_questions

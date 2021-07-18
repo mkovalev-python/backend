@@ -4,7 +4,7 @@ from django.conf.urls.static import static
 from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreateUser, GetUserList, DeleteUser, \
     CreateNewPoll, GetActivePolls, GetViewPoll, MovePolls, GetLatePolls, GetArchivePolls, GetTeam, GetPollTeam, \
     CheckPollTeam, GetPollsParticipant, GetAnalytics, GetExcel, UploadUser, GetTableRating, GetTableRatingTeam, \
-    CreateTest, GetTests, AnaliticNew, CreateStartInfo, GetUsersInfo, PullPoints, SearchUser
+    CreateTest, GetTests, AnaliticNew, CreateStartInfo, GetUsersInfo, PullPoints, SearchUser, SendNewPass
 from backend import settings
 
 urlpatterns = [
@@ -38,5 +38,6 @@ urlpatterns = [
     path('get/users/info/', GetUsersInfo.as_view()),
     path('pull/points/', PullPoints.as_view()),
     path('search/user/', SearchUser.as_view()),
+    path('send/new/password/', SendNewPass.as_view())
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

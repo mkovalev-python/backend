@@ -22,7 +22,7 @@ from django.shortcuts import render
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from api_v0.utils_views import save_poll_participant, save_poll_all, rating, points_my_team, save_poll, get_points, \
-    add_points
+    add_points, countAnswers
 from backend.settings import MEDIA_ROOT
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
     PollsCheck, QuestionsCheck, LogPoint, FileUpload, RatingTeam, Test, QuestionsTest, AnswersTest, CheckTest, \
@@ -267,7 +267,7 @@ class GetViewPoll(APIView):
                         answer.clear()
                     answer.append(i + 1)
             i += 1
-            list_questions.append({'question': question, 'answer': answer, 'id': i})
+            list_questions.append({'question': question, 'answer': answer, 'id': i, 'freeAnswer': item.freeAnswer})
 
         data = {'poll_info': serializer_poll, 'questions': list_questions}
 
@@ -309,19 +309,24 @@ class MovePolls(APIView):
                     get_answer = QuestionsCheckTest.objects.filter(poll_id=test.id)
                     listAnswers = []
                     for answer in get_answer:
-                        data={
+                        data = {
                             'ФИО': answer.user_valuer.first_name + ' ' + answer.user_valuer.last_name,
                             'Вопрос': answer.question.question,
                             'Ответ': answer.answer
                         }
                         listAnswers.append(data)
                     df3 = pd.DataFrame(listAnswers)
+
+                    countAnswer = countAnswers(get_answer, test.id, 'test')
+
+                    df4 = pd.DataFrame(countAnswer)
                     name = 'report.xlsx'
                     writer = pd.ExcelWriter(MEDIA_ROOT + '/file_excel/' + name, engine='xlsxwriter')
-                    df3.to_excel(writer, sheet_name='report')
+                    df3.to_excel(writer, sheet_name='Отчет по ответам')
+                    df4.to_excel(writer, sheet_name='Количество ответов')
                     writer.save()
 
-                    return Response({'link': 'http://127.0.0.1:8000/media/file_excel/' + name})
+                    return Response({'link': 'http://194.58.108.226:8000/media/file_excel/' + name})
                 if request.data['type'] == 'archive':
                     test.in_archive = True
                     test.save()
@@ -383,9 +388,17 @@ class MovePolls(APIView):
                     }
                     listAnswers.append(data)
                 df3 = pd.DataFrame(listAnswers)
+
+                countAnswer = countAnswers(get_answer, poll.id, 'poll')
+
+                df4 = pd.DataFrame(countAnswer)
+
                 name = 'report.xlsx'
                 writer = pd.ExcelWriter(MEDIA_ROOT + '/file_excel/' + name, engine='xlsxwriter')
-                df3.to_excel(writer, sheet_name='report')
+
+                df3.to_excel(writer, sheet_name='Отчет по ответам')
+                df4.to_excel(writer, sheet_name='Количество ответов')
+
                 writer.save()
 
                 return Response({'link': 'http://194.58.108.226:8000/media/file_excel/' + name})
@@ -485,7 +498,8 @@ class GetPollTeam(APIView):
                                 answer.clear()
                             answer.append(i)
                     i += 1
-                    list_questions.append({'question': question, 'answer': answer, 'id': i})
+                    list_questions.append(
+                        {'question': question, 'answer': answer, 'id': i, 'freeAnswer': item.freeAnswer})
 
                 data = {'poll_info': serializer, 'questions': list_questions, 'type': 'other'}
 
@@ -759,7 +773,7 @@ class UploadUser(APIView):
                 if User.objects.filter(username=row['email'].split('@')[0]).exists():
                     continue
                 serializer = UserSerializerWithToken(
-                    data={'username': row['email'].split('@')[0], 'password': password})
+                    data={'username': row['email'].split('@')[0], 'password': password, 'email': row['email']})
 
                 """CREATE COUNTRY"""
                 if Country.objects.filter(country=row['Город']).count() == 0:
@@ -767,6 +781,9 @@ class UploadUser(APIView):
 
                 if serializer.is_valid():
                     serializer.save()
+                    a = User.objects.get(username=row['email'].split('@')[0])
+                    a.email = row['email']
+                    a.save()
                     create_info_for_user = Profile(
                         first_name=row['Имя'],
                         last_name=row['Фамилия'],
@@ -781,6 +798,7 @@ class UploadUser(APIView):
                         username_id=row['email'].split('@')[0]).save()
                     create_rating_field = Rating(username_id=row['email'].split('@')[0],
                                                  rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
+
 
                 """Отправка письма с данными для входа"""
 
@@ -1156,3 +1174,67 @@ class SearchUser(APIView):
         return Response(data)
 
 
+class SendNewPass(APIView):
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser,)
+
+    @staticmethod
+    def get(request):
+        username = request.query_params.__getitem__('value')
+
+        get_email_user = User.objects.get(username=username)
+        password = ''
+        for x in range(8):
+            password = password + random.choice(
+                list('1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'))
+        get_email_user.set_password(password)
+        get_email_user.save()
+
+        """Отправка письма с данными для входа"""
+
+        message = MIMEMultipart()
+        message['Subject'] = 'Параметры для входа в систему опросов ТС'
+        message['From'] = 'support@tspolls.ru'
+        message['To'] = get_email_user.email
+        message['BCC'] = 'mkovalevhse@yandex.ru'
+
+        html = """\
+                                <html>
+                                    <head></head>
+                                    <body>
+                                    <h4>Добро пожаловать на «Территорию смыслов»!</h4>
+
+                                    <p>На связи команда модераторов. На этой неделе вы станете участниками и соавторами сотен 
+                                    событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь вы 
+                                    сможете оценивать спикеров «Диалогов на равных», различные службы, других участников и даже 
+                                    себя. Платформа покажет динамику ваших компетенций, рейтинги команд. Обо всем функционале 
+                                    расскажем совсем скоро.</p><br>
+                                    <p>Если с платформой возникнут проблемы, пишите нашей службе поддержки: support@tspolls.ru</p><br>
+
+
+                                    <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
+
+
+                                    <span><b>Login:</b>  """ + get_email_user.email.split('@')[0] + """</span><br>
+                                    <span><b>Password:</b>  """ + password + """</span><br>
+                                    <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
+                                    </body></html>"""
+
+        text = MIMEText(html, 'html')
+        message.attach(text)
+
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        with smtplib.SMTP('mail.nic.ru', 587) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.ehlo()
+            try:
+                server.login('support@tspolls.ru', 'Prosto2021')
+                server.sendmail(message['From'], message['To'], message.as_string())
+                server.quit()
+            except:
+                return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        return Response(status=status.HTTP_200_OK)
