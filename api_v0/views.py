@@ -283,7 +283,6 @@ class MovePolls(APIView):
             if request.data['comp']:
                 test = Test.objects.get(id=request.data['id'])
                 if request.data['type'] == 'copy':
-                    # toDo: допилить копирование
                     test_copy = Test(in_archive=False,
                                      description=test.description,
                                      latePosting=True,
@@ -1238,3 +1237,28 @@ class SendNewPass(APIView):
                 return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
         return Response(status=status.HTTP_200_OK)
+
+
+class Edit(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    @staticmethod
+    def post(request):
+        try:
+            competention = request.data['comp']
+            test = Test.objects.get(id=request.data['id'])
+            test.title = request.data['title']
+            test.description = request.data['description']
+            test.points = request.data['points']
+            test.session_id = request.data['session']
+            test.num_comp_id = competention
+            test.save()
+            return Response(status=status.HTTP_200_OK)
+        except KeyError:
+            poll = Polls.objects.get(id=request.data['id'])
+            poll.title = request.data['title']
+            poll.description = request.data['description']
+            poll.points = request.data['points']
+            poll.session_id = request.data['session']
+            poll.save()
+            return Response(status=status.HTTP_200_OK)
