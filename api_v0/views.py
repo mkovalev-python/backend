@@ -241,11 +241,11 @@ class GetArchivePolls(APIView):
         get_all_session = SessionTC.objects.all().exclude(number_session=0)
         data = {}
         for session in get_all_session:
-            queryset = Polls.objects.filter(in_archive=True, session_id=session.id)
+            queryset = Polls.objects.filter(in_archive=True, session_id=session.number_session)
             serializer = PollsSerializer(queryset, many=True)
 
-            queryset = Test.objects.filter(in_archive=True, session_id=session.id)
-            serializerTest = TestSerializer(queryset, many=True)
+            queryset1 = Test.objects.filter(in_archive=True, session_id=session.number_session)
+            serializerTest = TestSerializer(queryset1, many=True)
             data[session.number_session] = serializer.data + serializerTest.data
         return Response(data)
 
