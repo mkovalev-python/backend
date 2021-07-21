@@ -210,6 +210,7 @@ def countAnswers(answers, id, test_or_poll):
                 answersss = a[1:]
             for answer in answersss:
                 dict_answers[answer] = 0
+            dict_answers['Свой вариант'] = 0
             dict_questions[question.question] = dict_answers
 
         for answer in answers:
