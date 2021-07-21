@@ -213,7 +213,10 @@ def countAnswers(answers, id, test_or_poll):
             dict_questions[question.question] = dict_answers
 
         for answer in answers:
-            dict_questions[answer.question.question][answer.answer] += 1
+            try:
+                dict_questions[answer.question.question][answer.answer] += 1
+            except KeyError:
+                dict_questions[answer.question.question]['Свой вариант'] += 1
 
     else:
         get_questions = QuestionsTest.objects.filter(test_id=id)
