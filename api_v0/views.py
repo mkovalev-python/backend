@@ -216,6 +216,7 @@ class GetActivePolls(APIView):
 
         queryset = Test.objects.filter(in_archive=False, latePosting=False)
         serializerTest = TestSerializer(queryset, many=True)
+
         return Response(serializer.data + serializerTest.data)
 
 
@@ -237,12 +238,16 @@ class GetArchivePolls(APIView):
 
     @staticmethod
     def get(request):
-        queryset = Polls.objects.filter(in_archive=True)
-        serializer = PollsSerializer(queryset, many=True)
+        get_all_session = SessionTC.objects.all().exclude(number_session=0)
+        data = {}
+        for session in get_all_session:
+            queryset = Polls.objects.filter(in_archive=True, session_id=session.id)
+            serializer = PollsSerializer(queryset, many=True)
 
-        queryset = Test.objects.filter(in_archive=True, )
-        serializerTest = TestSerializer(queryset, many=True)
-        return Response(serializer.data + serializerTest.data)
+            queryset = Test.objects.filter(in_archive=True, session_id=session.id)
+            serializerTest = TestSerializer(queryset, many=True)
+            data[session.number_session] = serializer.data + serializerTest.data
+        return Response(data)
 
 
 class GetViewPoll(APIView):
@@ -797,7 +802,6 @@ class UploadUser(APIView):
                         username_id=row['email'].split('@')[0]).save()
                     create_rating_field = Rating(username_id=row['email'].split('@')[0],
                                                  rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
-
 
                 """Отправка письма с данными для входа"""
 
