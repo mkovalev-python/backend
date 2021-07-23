@@ -3,6 +3,7 @@ import os
 import random
 import smtplib
 import ssl
+import string
 import time
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -324,7 +325,9 @@ class MovePolls(APIView):
                     countAnswer = countAnswers(get_answer, test.id, 'test')
 
                     df4 = pd.DataFrame(countAnswer)
-                    name = 'report.xlsx'
+                    name_short = "".join(random.choice(string.ascii_letters) for j in range(random.randint(1, 10)))
+
+                    name = f'{name_short}.xlsx'
                     writer = pd.ExcelWriter(MEDIA_ROOT + '/file_excel/' + name, engine='xlsxwriter')
                     df3.to_excel(writer, sheet_name='Отчет по ответам')
                     df4.to_excel(writer, sheet_name='Количество ответов')
@@ -396,8 +399,9 @@ class MovePolls(APIView):
                 countAnswer = countAnswers(get_answer, poll.id, 'poll')
 
                 df4 = pd.DataFrame(countAnswer)
+                name_short = "".join(random.choice(string.ascii_letters) for j in range(random.randint(1, 10)))
 
-                name = 'report.xlsx'
+                name = f'{name_short}.xlsx'
                 writer = pd.ExcelWriter(MEDIA_ROOT + '/file_excel/' + name, engine='xlsxwriter')
 
                 df3.to_excel(writer, sheet_name='Отчет по ответам')
@@ -897,7 +901,7 @@ class GetTests(APIView):
                     'to3': None, 'after3': None, 'difference3': None,
                     'to4': None, 'after4': None, 'difference4': None}
             for el in list_competition:
-                tests = list(Test.objects.filter(num_comp_id=el))
+                tests = list(Test.objects.filter(num_comp_id=el,session_id=int(request.query_params.__getitem__('session'))))
                 if tests.__len__() == 2:
                     first_test = tests[0].id
                     second_test = tests[1].id
