@@ -84,8 +84,7 @@ class GetUserInfo(APIView):
                 except:
                     continue
             try:
-                koef_team = serializer_rating.__getitem__(0)['points'] / (
-                        serializer_rating_team.__getitem__('points') / get_team) / (koef_user / get_active_team.count())
+                koef_team = (serializer_rating_team.__getitem__('points') / get_team) / (koef_user / get_active_team.count())
             except ZeroDivisionError:
                 koef_team = 0
             try:
