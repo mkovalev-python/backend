@@ -1271,7 +1271,7 @@ class Edit(APIView):
             return Response(status=status.HTTP_200_OK)
 
 class DelUsers(APIView):
-    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser,)
+    permission_classes = (permissions.AllowAny,)
 
     @staticmethod
     def get(request):
@@ -1279,6 +1279,7 @@ class DelUsers(APIView):
         
         for user in get_user_session:
             us = User.objects.get(username=user.username)
+            print(us.username)
             us.delete()
         return Response('success')
 
