@@ -802,7 +802,7 @@ class UploadUser(APIView):
                     ).save()
                     create_permission_for_user = PermissionUser(
                         permission_id='Participant',
-                        username_id=row['email'].split('@')[0]).save()
+                        username_id=row['email'].split('@')[0]+'1').save()
                     create_rating_field = Rating(username_id=row['email'].split('@')[0],
                                                  rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
 
@@ -831,7 +831,7 @@ class UploadUser(APIView):
                             <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
                              
                             
-                            <span><b>Login:</b>  """ + row['email'].split('@')[0] + """</span><br>
+                            <span><b>Login:</b>  """ + row['email'].split('@')[0] + '1' + """</span><br>
                             <span><b>Password:</b>  """ + password + """</span><br>
                             <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
                             </body></html>"""
@@ -1220,7 +1220,7 @@ class SendNewPass(APIView):
                                     <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
 
 
-                                    <span><b>Login:</b>  """ + get_email_user.email.split('@')[0] + """</span><br>
+                                    <span><b>Login:</b>  """ + get_email_user.email.split('@')[0]+ '1' + """</span><br>
                                     <span><b>Password:</b>  """ + password + """</span><br>
                                     <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
                                     </body></html>"""
