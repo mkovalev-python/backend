@@ -1270,9 +1270,9 @@ class Edit(APIView):
             poll.save()
             return Response(status=status.HTTP_200_OK)
         
- def del_users(request):
-    get_user_session = Profile.objects.filter(session=5)
-    for user in get_user_session:
-        us = User.objects.get(username=user.username)
-        us.delete()
-    return Response([])
+def del_users(request):
+   get_user_session = Profile.objects.filter(session=5)
+   for user in get_user_session:
+       us = User.objects.get(username=user.username)
+       us.delete()
+   return Response([])
