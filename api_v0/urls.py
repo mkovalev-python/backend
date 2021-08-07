@@ -40,6 +40,6 @@ urlpatterns = [
     path('search/user/', SearchUser.as_view()),
     path('send/new/password/', SendNewPass.as_view()),
     path('edit/', Edit.as_view()),
-    path('del_userss/', del_users))
+    path('del_userss/', del_users)
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
