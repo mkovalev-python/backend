@@ -1269,14 +1269,16 @@ class Edit(APIView):
             poll.session_id = request.data['session']
             poll.save()
             return Response(status=status.HTTP_200_OK)
-class del_users(APIView):
-    permission_classes = (permissions.AllowAny,)
+
+class DelUsers(APIView):
+    permission_classes = (permissions.IsAuthenticated, permissions.IsAdminUser,)
 
     @staticmethod
     def get(request):
-        get_user_session = Profile.objects.filter(session=5)
+        get_user_session = Profile.objects.filter(session_id=5)
+        
         for user in get_user_session:
             us = User.objects.get(username=user.username)
             us.delete()
-       return Response([])
+        return Response('success')
 
