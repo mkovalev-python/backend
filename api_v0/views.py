@@ -163,7 +163,10 @@ class GetUserList(APIView):
         data = []
         for username in username:
             dict_user = {}
-            user_info = Profile.objects.get(username_id=username.username)
+            try:
+                user_info = Profile.objects.get(username_id=username.username)
+            except DoesNotExist:
+                continue
             user_permission = PermissionUser.objects.get(username_id=username.username)
 
             dict_user = {
