@@ -777,10 +777,10 @@ class UploadUser(APIView):
                     password = password + random.choice(
                         list('1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'))
 
-                if User.objects.filter(username=row['email'].split('@')[0]).exists():
+                if User.objects.filter(username=str(row['email']).split('@')[0]).exists():
                     continue
                 serializer = UserSerializerWithToken(
-                    data={'username': row['email'].split('@')[0], 'password': password, 'email': row['email']})
+                    data={'username': str(row['email']).split('@')[0], 'password': password, 'email': row['email']})
 
                 """CREATE COUNTRY"""
                 if Country.objects.filter(country=row['Город']).count() == 0:
@@ -788,8 +788,8 @@ class UploadUser(APIView):
 
                 if serializer.is_valid():
                     serializer.save()
-                    a = User.objects.get(username=row['email'].split('@')[0])
-                    a.email = row['email']
+                    a = User.objects.get(username=str(row['email']).split('@')[0])
+                    a.email = str(row['email'])
                     a.save()
                     create_info_for_user = Profile(
                         first_name=row['Имя'],
@@ -797,13 +797,13 @@ class UploadUser(APIView):
                         country_id=row['Город'],
                         team_id=row['Команда'],
                         birthday=row['Дата рождения'],
-                        username_id=row['email'].split('@')[0],
+                        username_id=str(row['email']).split('@')[0],
                         session_id=row['Смена']
                     ).save()
                     create_permission_for_user = PermissionUser(
                         permission_id='Participant',
-                        username_id=row['email'].split('@')[0]).save()
-                    create_rating_field = Rating(username_id=row['email'].split('@')[0],
+                        username_id=str(row['email']).split('@')[0]).save()
+                    create_rating_field = Rating(username_id=str(row['email']).split('@')[0],
                                                  rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
 
                 """Отправка письма с данными для входа"""
@@ -811,7 +811,7 @@ class UploadUser(APIView):
                 message = MIMEMultipart()
                 message['Subject'] = 'Параметры для входа в систему опросов ТС'
                 message['From'] = 'support@tspolls.ru'
-                message['To'] = row['email']
+                message['To'] = str(row['email'])
                 # message['BCC'] = 'mkovalevhse@yandex.ru'
 
                 html = """\
@@ -831,7 +831,7 @@ class UploadUser(APIView):
                             <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
                              
                             
-                            <span><b>Login:</b>  """ + row['email'].split('@')[0] + """</span><br>
+                            <span><b>Login:</b>  """ + str(row['email']).split('@')[0] + """</span><br>
                             <span><b>Password:</b>  """ + password + """</span><br>
                             <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
                             </body></html>"""
