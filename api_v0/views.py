@@ -165,7 +165,7 @@ class GetUserList(APIView):
             dict_user = {}
             try:
                 user_info = Profile.objects.get(username_id=username.username)
-            except DoesNotExist:
+            except:
                 continue
             user_permission = PermissionUser.objects.get(username_id=username.username)
 
