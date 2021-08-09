@@ -854,7 +854,7 @@ class UploadUser(APIView):
                         server.login('support@tspolls.ru', 'Prosto2021')
                         server.sendmail(message['From'], message['To'], message.as_string())
                         server.quit()
-                    except Except as e:
+                    except Exception as e:
                         print(e)
                         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
