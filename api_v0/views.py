@@ -846,17 +846,17 @@ class UploadUser(APIView):
                 context.check_hostname = False
                 context.verify_mode = ssl.CERT_NONE
 
-                with smtplib.SMTP('mail.nic.ru', 587) as server:
-                    server.ehlo()
-                    server.starttls(context=context)
-                    server.ehlo()
-                    try:
-                        server.login('support@tspolls.ru', 'Prosto2021')
-                        server.sendmail(message['From'], message['To'], message.as_string())
-                        server.quit()
-                    except Exception as e:
-                        print(e)
-                        return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+#                 with smtplib.SMTP('mail.nic.ru', 587) as server:
+#                     server.ehlo()
+#                     server.starttls(context=context)
+#                     server.ehlo()
+#                     try:
+#                         server.login('support@tspolls.ru', 'Prosto2021')
+#                         server.sendmail(message['From'], message['To'], message.as_string())
+#                         server.quit()
+#                     except Exception as e:
+#                         print(e)
+#                         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
         return Response(status=status.HTTP_202_ACCEPTED)
 
