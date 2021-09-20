@@ -459,7 +459,7 @@ class GetPollTeam(APIView):
         active_session = SessionTC.objects.get(active_session=True).number_session
 
         if category == 'participant':
-            active_poll_team = Polls.objects.get(session_id=active_session, in_archive=False, category=category)
+            active_poll_team = Polls.objects.get(session_id=active_session, latePosting=False, in_archive=False, category=category)
             check_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
                                                         poll_user_id=request.query_params['id'],
                                                         user_valuer_id=request.user.profile.id).exists()
