@@ -19,7 +19,7 @@ from rest_framework import permissions, status
 from django.http import HttpResponse
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from api_v0.utils_views import save_poll_participant, save_poll_all, rating, points_my_team, save_poll, get_points, \
@@ -84,7 +84,8 @@ class GetUserInfo(APIView):
                 except:
                     continue
             try:
-                koef_team = (serializer_rating_team.__getitem__('points') / get_team) / (koef_user / get_active_team.count())
+                koef_team = (serializer_rating_team.__getitem__('points') / get_team) / (
+                        koef_user / get_active_team.count())
             except ZeroDivisionError:
                 koef_team = 0
             try:
@@ -459,7 +460,8 @@ class GetPollTeam(APIView):
         active_session = SessionTC.objects.get(active_session=True).number_session
 
         if category == 'participant':
-            active_poll_team = Polls.objects.get(session_id=active_session, latePosting=False, in_archive=False, category=category)
+            active_poll_team = Polls.objects.get(session_id=active_session, latePosting=False, in_archive=False,
+                                                 category=category)
             check_completed = PollsCheck.objects.filter(poll_id=active_poll_team.id,
                                                         poll_user_id=request.query_params['id'],
                                                         user_valuer_id=request.user.profile.id).exists()
@@ -809,55 +811,6 @@ class UploadUser(APIView):
                     create_rating_field = Rating(username_id=str(row['email']).split('@')[0],
                                                  rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
 
-                """Отправка письма с данными для входа"""
-
-                message = MIMEMultipart()
-                message['Subject'] = 'Параметры для входа в систему опросов ТС'
-                message['From'] = 'support@tspolls.ru'
-                message['To'] = str(row['email'])
-                # message['BCC'] = 'mkovalevhse@yandex.ru'
-
-                html = """\
-                        <html>
-                            <head></head>
-                            <body>
-                            <h4>Добро пожаловать на «Территорию смыслов»!</h4>
-                            
-                            <p>На связи команда модераторов. На этой неделе вы станете участниками и соавторами сотен 
-                            событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь вы 
-                            сможете оценивать спикеров «Диалогов на равных», различные службы, других участников и даже 
-                            себя. Платформа покажет динамику ваших компетенций, рейтинги команд. Обо всем функционале 
-                            расскажем совсем скоро.</p><br>
-                            <p>Если с платформой возникнут проблемы, пишите нашей службе поддержки: support@tspolls.ru</p><br>
-
-                            
-                            <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
-                             
-                            
-                            <span><b>Login:</b>  """ + str(row['email']).split('@')[0] + """</span><br>
-                            <span><b>Password:</b>  """ + password + """</span><br>
-                            <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
-                            </body></html>"""
-
-                text = MIMEText(html, 'html')
-                message.attach(text)
-
-                context = ssl.create_default_context()
-                context.check_hostname = False
-                context.verify_mode = ssl.CERT_NONE
-
-#                 with smtplib.SMTP('mail.nic.ru', 587) as server:
-#                     server.ehlo()
-#                     server.starttls(context=context)
-#                     server.ehlo()
-#                     try:
-#                         server.login('support@tspolls.ru', 'Prosto2021')
-#                         server.sendmail(message['From'], message['To'], message.as_string())
-#                         server.quit()
-#                     except Exception as e:
-#                         print(e)
-#                         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-
         return Response(status=status.HTTP_202_ACCEPTED)
 
 
@@ -904,7 +857,8 @@ class GetTests(APIView):
                     'to3': None, 'after3': None, 'difference3': None,
                     'to4': None, 'after4': None, 'difference4': None}
             for el in list_competition:
-                tests = list(Test.objects.filter(num_comp_id=el,session_id=int(request.query_params.__getitem__('session'))))
+                tests = list(
+                    Test.objects.filter(num_comp_id=el, session_id=int(request.query_params.__getitem__('session'))))
                 if tests.__len__() == 2:
                     first_test = tests[0].id
                     second_test = tests[1].id
@@ -1274,16 +1228,84 @@ class Edit(APIView):
             poll.save()
             return Response(status=status.HTTP_200_OK)
 
+
 class DelUsers(APIView):
     permission_classes = (permissions.AllowAny,)
 
     @staticmethod
     def get(request):
         get_user_session = Profile.objects.filter(session_id=5)
-        
+
         for user in get_user_session:
             us = User.objects.get(username=user.username)
             print(us.username)
             us.delete()
         return Response('success')
 
+
+class PostPassword(APIView):
+    permission_classes = (permissions.AllowAny,)
+
+    @staticmethod
+    def post(request):
+        try:
+            get_email_user = User.objects.get(email=request.data.get('email'))
+        except:
+            return Response('Пользователь с такой электронной почтой не существует!'
+                            'Обратитесь к администраторам системы: tspolls2021@gmail.com',
+                            status=status.HTTP_404_NOT_FOUND)
+        password = ''
+        for x in range(8):
+            password = password + random.choice(
+                list('1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'))
+        get_email_user.set_password(password)
+        get_email_user.save()
+
+        """Отправка письма с данными для входа"""
+
+        message = MIMEMultipart()
+        message['Subject'] = 'Параметры для входа в систему опросов ТС'
+        message['From'] = 'support@tspolls.ru'
+        message['To'] = get_email_user.email
+
+        html = """\
+                                        <html>
+                                            <head></head>
+                                            <body>
+                                            <h4>Добро пожаловать на «Территорию смыслов»!</h4>
+
+                                            <p>На связи команда модераторов. На этой неделе вы станете участниками и соавторами сотен 
+                                            событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь вы 
+                                            сможете оценивать спикеров «Диалогов на равных», различные службы, других участников и даже 
+                                            себя. Платформа покажет динамику ваших компетенций, рейтинги команд. Обо всем функционале 
+                                            расскажем совсем скоро.</p><br>
+                                            <p>Если с платформой возникнут проблемы, пишите нашей службе поддержки: support@tspolls.ru</p><br>
+
+
+                                            <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
+
+
+                                            <span><b>Login:</b>  """ + get_email_user.email.split('@')[0] + """</span><br>
+                                            <span><b>Password:</b>  """ + password + """</span><br>
+                                            <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
+                                            </body></html>"""
+
+        text = MIMEText(html, 'html')
+        message.attach(text)
+
+        context = ssl.create_default_context()
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+
+        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+            server.ehlo()
+            server.starttls(context=context)
+            server.ehlo()
+            try:
+                server.login('tspolls2021@gmail.com', '124578qwas')
+                server.sendmail(message['From'], message['To'], message.as_string())
+                server.quit()
+            except:
+                return Response("Не удалось отправить пароль, попробуйте позже!", status=status.HTTP_406_NOT_ACCEPTABLE)
+
+        return Response("Пароль успешно отправлен!", status=status.HTTP_202_ACCEPTED)
