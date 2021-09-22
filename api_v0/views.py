@@ -336,7 +336,7 @@ class MovePolls(APIView):
                     df4.to_excel(writer, sheet_name='Количество ответов')
                     writer.save()
 
-                    return Response({'link': 'http://194.58.108.226:8000/media/file_excel/' + name})
+                    return Response({'link': '/api/media/file_excel/' + name})
                 if request.data['type'] == 'archive':
                     test.in_archive = True
                     test.save()
@@ -412,7 +412,7 @@ class MovePolls(APIView):
 
                 writer.save()
 
-                return Response({'link': 'http://194.58.108.226:8000/media/file_excel/' + name})
+                return Response({'link': '/api/media/file_excel/' + name})
 
             if request.data['type'] == 'archive':
                 if poll.category == 'participant' and poll.latePosting == False:
@@ -928,7 +928,7 @@ class GetTests(APIView):
         writer.save()
 
         return Response({'test': list_elements_table, 'users': list_rating_users, 'team': list_rating_team,
-                         'link': 'http://194.58.108.226:8000/media/file_excel/' + name})
+                         'link': '/api/media/file_excel/' + name})
 
 
 """Аналитика новая версия"""
@@ -989,7 +989,7 @@ class AnaliticNew(APIView):
         writer.save()
 
         data = {'logger': logger_list, 'rating_user': rating_user, 'rating_team': rating_team,
-                'link': 'http://194.58.108.226:8000/media/file_excel/' + name}
+                'link': '/api/media/file_excel/' + name}
         return Response(data)
 
 
