@@ -8,6 +8,7 @@ from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreate
     DelUsers, PostPassword
 from backend import settings
 from django.contrib import admin
+from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('token/obtain/', obtain_jwt_token),
@@ -46,3 +47,4 @@ urlpatterns = [
     path('post/password/', PostPassword.as_view())
 ]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+urlpatterns += staticfiles_urlpatterns()
