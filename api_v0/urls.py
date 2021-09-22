@@ -7,8 +7,9 @@ from api_v0.views import CheckPermission, GetUserInfo, GetListOption, PostCreate
     CreateTest, GetTests, AnaliticNew, CreateStartInfo, GetUsersInfo, PullPoints, SearchUser, SendNewPass, Edit, \
     DelUsers, PostPassword
 from backend import settings
-
+from django.contrib import admin
 urlpatterns = [
+    path('admin/', admin.site.urls),
     path('token/obtain/', obtain_jwt_token),
     path('token/refresh/', refresh_jwt_token),
     path('check/permission/', CheckPermission.as_view()),
