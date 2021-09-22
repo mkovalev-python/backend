@@ -11,7 +11,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'eqwwewqewq'
 DEBUG = env('DEBUG', default=True)
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0', '194.58.108.226', 'tspolls.ru']
+ALLOWED_HOSTS = ['*']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
