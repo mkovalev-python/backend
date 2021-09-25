@@ -1297,15 +1297,15 @@ class PostPassword(APIView):
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
 
-        with smtplib.SMTP('smtp.gmail.com', 587) as server:
+        with smtplib.SMTP('mail.nic.ru', 587) as server:
             server.ehlo()
             server.starttls(context=context)
             server.ehlo()
             try:
-                server.login('tspolls2021@gmail.com', '124578qwas')
+                server.login('support@tspolls.ru', 'Prosto2021')
                 server.sendmail(message['From'], message['To'], message.as_string())
                 server.quit()
-            except:
-                return Response("Не удалось отправить пароль, попробуйте позже!", status=status.HTTP_406_NOT_ACCEPTABLE)
+            except Exception as e:
+                return Response(f"Не удалось отправить пароль, попробуйте позже!({str(e)})", status=status.HTTP_406_NOT_ACCEPTABLE)
 
         return Response("Пароль успешно отправлен!", status=status.HTTP_202_ACCEPTED)
