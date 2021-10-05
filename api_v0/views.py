@@ -1265,7 +1265,7 @@ class PostPassword(APIView):
 
         message = MIMEMultipart()
         message['Subject'] = 'Параметры для входа в систему опросов ТС'
-        message['From'] = 'support@tspolls.ru'
+        message['From'] = 'm.kovalev@code4bones.ru'
         message['To'] = get_email_user.email
 
         html = """\
@@ -1297,12 +1297,12 @@ class PostPassword(APIView):
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
 
-        with smtplib.SMTP('mail.nic.ru', 587) as server:
+        with smtplib.SMTP('smtp.mail.ru', 465) as server:
             server.ehlo()
             server.starttls(context=context)
             server.ehlo()
             try:
-                server.login('support@tspolls.ru', 'Prosto2021')
+                server.login('m.kovalev@code4bones.ru', '123456789!')
                 server.sendmail(message['From'], message['To'], message.as_string())
                 server.quit()
             except Exception as e:
