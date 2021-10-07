@@ -1154,34 +1154,34 @@ class SendNewPass(APIView):
         get_email_user.save()
 
         """Отправка письма с данными для входа"""
-        smtp_data = SmtpServer.objects.order_by('-created_date').first()
 
         message = MIMEMultipart()
         message['Subject'] = 'Параметры для входа в систему опросов ТС'
-        message['From'] = smtp_data.email
+        message['From'] = 'support@tspolls.ru'
         message['To'] = get_email_user.email
+        message['BCC'] = 'mkovalevhse@yandex.ru'
 
         html = """\
-                                        <html>
-                                            <head></head>
-                                            <body>
-                                            <h4>Добро пожаловать на «Территорию смыслов»!</h4>
+                                <html>
+                                    <head></head>
+                                    <body>
+                                    <h4>Добро пожаловать на «Территорию смыслов»!</h4>
 
-                                            <p>На связи команда модераторов. На этой неделе вы станете участниками и соавторами сотен 
-                                            событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь вы 
-                                            сможете оценивать спикеров «Диалогов на равных», различные службы, других участников и даже 
-                                            себя. Платформа покажет динамику ваших компетенций, рейтинги команд. Обо всем функционале 
-                                            расскажем совсем скоро.</p><br>
-                                            <p>Если с платформой возникнут проблемы, пишите нашей службе поддержки: support@tspolls.ru</p><br>
-
-
-                                            <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
+                                    <p>На связи команда модераторов. На этой неделе вы станете участниками и соавторами сотен 
+                                    событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь вы 
+                                    сможете оценивать спикеров «Диалогов на равных», различные службы, других участников и даже 
+                                    себя. Платформа покажет динамику ваших компетенций, рейтинги команд. Обо всем функционале 
+                                    расскажем совсем скоро.</p><br>
+                                    <p>Если с платформой возникнут проблемы, пишите нашей службе поддержки: support@tspolls.ru</p><br>
 
 
-                                            <span><b>Login:</b>  """ + get_email_user.email.split('@')[0] + """</span><br>
-                                            <span><b>Password:</b>  """ + password + """</span><br>
-                                            <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
-                                            </body></html>"""
+                                    <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
+
+
+                                    <span><b>Login:</b>  """ + get_email_user.email.split('@')[0] + """</span><br>
+                                    <span><b>Password:</b>  """ + password + """</span><br>
+                                    <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
+                                    </body></html>"""
 
         text = MIMEText(html, 'html')
         message.attach(text)
@@ -1190,20 +1190,18 @@ class SendNewPass(APIView):
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
 
-        with smtplib.SMTP(smtp_data.host, smtp_data.port) as server:
+        with smtplib.SMTP('mail.nic.ru', 587) as server:
             server.ehlo()
             server.starttls(context=context)
             server.ehlo()
             try:
-                server.login(smtp_data.email, smtp_data.password)
+                server.login('support@tspolls.ru', 'Prosto2021')
                 server.sendmail(message['From'], message['To'], message.as_string())
                 server.quit()
-                get_email_user.save()
-            except Exception as e:
-                return Response(f"Не удалось отправить пароль, попробуйте позже!({str(e)})",
-                                status=status.HTTP_406_NOT_ACCEPTABLE)
+            except:
+                return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        return Response("Пароль успешно отправлен!", status=status.HTTP_202_ACCEPTED)
+        return Response(status=status.HTTP_200_OK)
 
 
 class Edit(APIView):
@@ -1262,12 +1260,13 @@ class PostPassword(APIView):
                 list('1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'))
         get_email_user.set_password(password)
 
+
         """Отправка письма с данными для входа"""
         smtp_data = SmtpServer.objects.order_by('-created_date').first()
 
         message = MIMEMultipart()
         message['Subject'] = 'Параметры для входа в систему опросов ТС'
-        message['From'] = smtp_data.email
+        message['From'] = 'support@tspolls.ru'
         message['To'] = get_email_user.email
 
         html = """\
@@ -1299,17 +1298,16 @@ class PostPassword(APIView):
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
 
-        with smtplib.SMTP(smtp_data.host, smtp_data.port) as server:
+        with smtplib.SMTP('mail.nic.ru', 587) as server:
             server.ehlo()
             server.starttls(context=context)
             server.ehlo()
             try:
-                server.login(smtp_data.email, smtp_data.password)
+                server.login('support@tspolls.ru', 'HGsp#u29mm')
                 server.sendmail(message['From'], message['To'], message.as_string())
                 server.quit()
                 get_email_user.save()
             except Exception as e:
-                return Response(f"Не удалось отправить пароль, попробуйте позже!({str(e)})",
-                                status=status.HTTP_406_NOT_ACCEPTABLE)
+                return Response(f"Не удалось отправить пароль, попробуйте позже!({str(e)})", status=status.HTTP_406_NOT_ACCEPTABLE)
 
         return Response("Пароль успешно отправлен!", status=status.HTTP_202_ACCEPTED)
