@@ -1265,7 +1265,7 @@ class PostPassword(APIView):
 
         message = MIMEMultipart()
         message['Subject'] = 'Параметры для входа в систему опросов ТС'
-        message['From'] = 'support@tspolls.ru'
+        message['From'] = 'noreply@tspolls.ru'
         message['To'] = get_email_user.email
 
         html = """\
@@ -1302,7 +1302,7 @@ class PostPassword(APIView):
             server.starttls(context=context)
             server.ehlo()
             try:
-                server.login('support@tspolls.ru', 'HGsp#u29mm')
+                server.login('noreply@tspolls.ru', 'HGsp#u29mm')
                 server.sendmail(message['From'], message['To'], message.as_string())
                 server.quit()
                 get_email_user.save()
