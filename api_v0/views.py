@@ -27,7 +27,7 @@ from api_v0.utils_views import save_poll_participant, save_poll_all, rating, poi
 from backend.settings import MEDIA_ROOT
 from model.models import PermissionUser, Profile, Permission, Team, Country, Polls, Questions, Rating, SessionTC, \
     PollsCheck, QuestionsCheck, LogPoint, FileUpload, RatingTeam, Test, QuestionsTest, AnswersTest, CheckTest, \
-    QuestionsCheckTest
+    QuestionsCheckTest, SmtpServer
 from model.serializer import PermissionUserSerializer, ProfileSerializer, PermissionSerializer, TeamSerializer, \
     CountrySerializer, UserSerializerWithToken, PollsSerializer, RatingSerializer, SessionTCSerializer, \
     LogPointSerializer, QuestionsSerializer, QuestionsCheckSerializer, RatingTeamSerializer, TestSerializer, \
@@ -1154,34 +1154,34 @@ class SendNewPass(APIView):
         get_email_user.save()
 
         """Отправка письма с данными для входа"""
+        smtp_data = SmtpServer.objects.order_by('-created_date').first()
 
         message = MIMEMultipart()
         message['Subject'] = 'Параметры для входа в систему опросов ТС'
-        message['From'] = 'support@tspolls.ru'
+        message['From'] = smtp_data.email
         message['To'] = get_email_user.email
-        message['BCC'] = 'mkovalevhse@yandex.ru'
 
         html = """\
-                                <html>
-                                    <head></head>
-                                    <body>
-                                    <h4>Добро пожаловать на «Территорию смыслов»!</h4>
+                                        <html>
+                                            <head></head>
+                                            <body>
+                                            <h4>Добро пожаловать на «Территорию смыслов»!</h4>
 
-                                    <p>На связи команда модераторов. На этой неделе вы станете участниками и соавторами сотен 
-                                    событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь вы 
-                                    сможете оценивать спикеров «Диалогов на равных», различные службы, других участников и даже 
-                                    себя. Платформа покажет динамику ваших компетенций, рейтинги команд. Обо всем функционале 
-                                    расскажем совсем скоро.</p><br>
-                                    <p>Если с платформой возникнут проблемы, пишите нашей службе поддержки: support@tspolls.ru</p><br>
-
-
-                                    <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
+                                            <p>На связи команда модераторов. На этой неделе вы станете участниками и соавторами сотен 
+                                            событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь вы 
+                                            сможете оценивать спикеров «Диалогов на равных», различные службы, других участников и даже 
+                                            себя. Платформа покажет динамику ваших компетенций, рейтинги команд. Обо всем функционале 
+                                            расскажем совсем скоро.</p><br>
+                                            <p>Если с платформой возникнут проблемы, пишите нашей службе поддержки: support@tspolls.ru</p><br>
 
 
-                                    <span><b>Login:</b>  """ + get_email_user.email.split('@')[0] + """</span><br>
-                                    <span><b>Password:</b>  """ + password + """</span><br>
-                                    <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
-                                    </body></html>"""
+                                            <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
+
+
+                                            <span><b>Login:</b>  """ + get_email_user.email.split('@')[0] + """</span><br>
+                                            <span><b>Password:</b>  """ + password + """</span><br>
+                                            <a href='http://tspolls.ru/'>АВТОРИЗОВАТЬСЯ</a>
+                                            </body></html>"""
 
         text = MIMEText(html, 'html')
         message.attach(text)
@@ -1190,18 +1190,20 @@ class SendNewPass(APIView):
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
 
-        with smtplib.SMTP('mail.nic.ru', 587) as server:
+        with smtplib.SMTP(smtp_data.host, smtp_data.port) as server:
             server.ehlo()
             server.starttls(context=context)
             server.ehlo()
             try:
-                server.login('support@tspolls.ru', 'Prosto2021')
+                server.login(smtp_data.email, smtp_data.password)
                 server.sendmail(message['From'], message['To'], message.as_string())
                 server.quit()
-            except:
-                return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+                get_email_user.save()
+            except Exception as e:
+                return Response(f"Не удалось отправить пароль, попробуйте позже!({str(e)})",
+                                status=status.HTTP_406_NOT_ACCEPTABLE)
 
-        return Response(status=status.HTTP_200_OK)
+        return Response("Пароль успешно отправлен!", status=status.HTTP_202_ACCEPTED)
 
 
 class Edit(APIView):
@@ -1259,13 +1261,13 @@ class PostPassword(APIView):
             password = password + random.choice(
                 list('1234567890qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM'))
         get_email_user.set_password(password)
-        get_email_user.save()
 
         """Отправка письма с данными для входа"""
+        smtp_data = SmtpServer.objects.order_by('-created_date').first()
 
         message = MIMEMultipart()
         message['Subject'] = 'Параметры для входа в систему опросов ТС'
-        message['From'] = 'm.kovalev@code4bones.ru'
+        message['From'] = smtp_data.email
         message['To'] = get_email_user.email
 
         html = """\
@@ -1297,15 +1299,17 @@ class PostPassword(APIView):
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
 
-        with smtplib.SMTP('smtp.mail.ru', 465) as server:
+        with smtplib.SMTP(smtp_data.host, smtp_data.port) as server:
             server.ehlo()
             server.starttls(context=context)
             server.ehlo()
             try:
-                server.login('m.kovalev@code4bones.ru', '123456789!')
+                server.login(smtp_data.email, smtp_data.password)
                 server.sendmail(message['From'], message['To'], message.as_string())
                 server.quit()
+                get_email_user.save()
             except Exception as e:
-                return Response(f"Не удалось отправить пароль, попробуйте позже!({str(e)})", status=status.HTTP_406_NOT_ACCEPTABLE)
+                return Response(f"Не удалось отправить пароль, попробуйте позже!({str(e)})",
+                                status=status.HTTP_406_NOT_ACCEPTABLE)
 
         return Response("Пароль успешно отправлен!", status=status.HTTP_202_ACCEPTED)

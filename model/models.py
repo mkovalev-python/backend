@@ -285,3 +285,18 @@ class QuestionsCheckTest(models.Model):
     class Meta:
         verbose_name = 'Ответ на вопрос Теста'
         verbose_name_plural = 'Ответы на вопросы Теста'
+
+
+class SmtpServer(models.Model):
+    host = models.CharField("Имя хоста (example.ru)", max_length=255)
+    port = models.IntegerField("Порт")
+    email = models.CharField("Электронная почта отправителя", max_length=255)
+    password = models.CharField("Пароль от электронной почты", max_length=255)
+    created_date = models.DateTimeField("Дата создания", auto_now_add=True)
+
+    def __str__(self):
+        return self.email
+
+    class Meta:
+        verbose_name = 'SMTP сервер'
+        verbose_name_plural = 'SMTP сервер'
