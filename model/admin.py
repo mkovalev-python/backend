@@ -7,7 +7,7 @@ from django.utils.safestring import mark_safe
 
 from model.models import Profile, Country, Team, PermissionUser, Permission, Polls, Questions, Rating, SessionTC, \
     PollsCheck, QuestionsCheck, FileUpload, RatingTeam, Test, NumComp, CheckTest, LogPoint, QuestionsCheckTest, \
-    AnswersTest, QuestionsTest
+    AnswersTest, QuestionsTest, SmtpServer
 
 
 class UserInline(admin.StackedInline):
@@ -56,3 +56,4 @@ admin.site.register(LogPoint)
 admin.site.register(QuestionsCheckTest)
 admin.site.register(AnswersTest)
 admin.site.register(QuestionsTest)
+admin.site.register(SmtpServer)
