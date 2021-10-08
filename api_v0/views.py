@@ -140,14 +140,14 @@ class PostCreateUser(APIView):
                 birthday=request.data['birthday'].split('T')[0],
                 country_id=request.data['country'],
                 team_id=request.data['team'],
-                username_id=request.data['username'],
+                username_id=request.data['username'].split('@')[0],
                 session_id=request.data['session']
             ).save()
             create_permission_for_user = PermissionUser(
                 permission_id=request.data['permission'],
-                username_id=request.data['username']).save()
+                username_id=request.data['username'].split('@')[0]).save()
             if request.data['permission'] != 'Staff':
-                create_rating_field = Rating(username_id=request.data['username'],
+                create_rating_field = Rating(username_id=request.data['username'].split('@')[0],
                                              rating=Profile.objects.exclude(team='Staff').count(), points=0).save()
 
         else:
