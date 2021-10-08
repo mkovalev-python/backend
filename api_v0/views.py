@@ -129,7 +129,8 @@ class PostCreateUser(APIView):
     def post(request):
 
         serializer = UserSerializerWithToken(
-            data={'username': request.data['username'], 'password': request.data['password']})
+            data={'username': request.data['username'].split('@')[0], 'password': request.data['password'],
+                  'email': request.data['username']})
 
         if serializer.is_valid():
             serializer.save()
