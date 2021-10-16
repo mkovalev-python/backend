@@ -10,7 +10,6 @@ from backend import settings
 from django.contrib import admin
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('token/obtain/', obtain_jwt_token),
     path('token/refresh/', refresh_jwt_token),
     path('check/permission/', CheckPermission.as_view()),
