@@ -820,20 +820,20 @@ class CreateTest(APIView):
 
     @staticmethod
     def post(request):
-            test = Test(title=request.data['values']['name'],
-                        description=request.data['values']['description'],
-                        points=request.data['values']['points'],
-                        session_id=request.data['values']['session'],
-                        num_comp_id=int(request.data['values']['numComp']))
-            test.save()
-            for el in request.data['listQuestions']:
-                question = QuestionsTest(question=el['question'], test_id=test.id)
-                question.save()
-                for i in el['answers']:
-                    answer = AnswersTest(answer=i['answer'], points=i['point'], question_id=question.id)
-                    answer.save()
+        test = Test(title=request.data['values']['name'],
+                    description=request.data['values']['description'],
+                    points=request.data['values']['points'],
+                    session_id=request.data['values']['session'],
+                    num_comp_id=int(request.data['values']['numComp']))
+        test.save()
+        for el in request.data['listQuestions']:
+            question = QuestionsTest(question=el['question'], test_id=test.id)
+            question.save()
+            for i in el['answers']:
+                answer = AnswersTest(answer=i['answer'], points=i['point'], question_id=question.id)
+                answer.save()
 
-            return Response(status=status.HTTP_201_CREATED)
+        return Response(status=status.HTTP_201_CREATED)
 
 
 class GetTests(APIView):
@@ -1163,14 +1163,15 @@ class SendNewPass(APIView):
                                 <html>
                                     <head></head>
                                     <body>
-                                    <h4>Добро пожаловать на «Территорию смыслов»!</h4>
+                                    <h4>Добро пожаловать на «Территорию смыслов. Южный Урал»!</h4>
 
-                                    <p>На связи команда модераторов. На этой неделе вы станете участниками и соавторами сотен 
-                                    событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь вы 
-                                    сможете оценивать спикеров «Диалогов на равных», различные службы, других участников и даже 
-                                    себя. Платформа покажет динамику ваших компетенций, рейтинги команд. Обо всем функционале 
-                                    расскажем совсем скоро.</p><br>
-                                    <p>Если с платформой возникнут проблемы, пишите нашей службе поддержки: support@tspolls.ru</p><br>
+                                    <p>На связи команда модераторов. На этой неделе вы станете участниками и 
+                                    соавторами сотен событий #ТСнавсегда. Элементы программы дополняет цифровая 
+                                    платформа форума. Здесь вы сможете оценивать спикеров панельных дискуссий, 
+                                    различные службы, других участников и даже себя. Платформа покажет динамику ваших 
+                                    компетенций, рейтинги команд. Обо всем функционале расскажем совсем 
+                                    скоро.</p><br> <p>Если с платформой возникнут проблемы, пишите нашей службе 
+                                    поддержки: support@tspolls.ru</p><br> 
 
 
                                     <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
@@ -1270,14 +1271,15 @@ class PostPassword(APIView):
                                         <html>
                                             <head></head>
                                             <body>
-                                            <h4>Добро пожаловать на «Территорию смыслов»!</h4>
+                                            <h4>Добро пожаловать на «Территорию смыслов. Южный Урал»!</h4>
 
-                                            <p>На связи команда модераторов. На этой неделе вы станете участниками и соавторами сотен
-                                            событий #ТСнавсегда. Элементы программы дополняет цифровая платформа форума. Здесь вы
-                                            сможете оценивать спикеров «Диалогов на равных», различные службы, других участников и даже
-                                            себя. Платформа покажет динамику ваших компетенций, рейтинги команд. Обо всем функционале
-                                            расскажем совсем скоро.</p><br>
-                                            <p>Если с платформой возникнут проблемы, пишите нашей службе поддержки: support@tspolls.ru</p><br>
+                                    <p>На связи команда модераторов. На этой неделе вы станете участниками и 
+                                    соавторами сотен событий #ТСнавсегда. Элементы программы дополняет цифровая 
+                                    платформа форума. Здесь вы сможете оценивать спикеров панельных дискуссий, 
+                                    различные службы, других участников и даже себя. Платформа покажет динамику ваших 
+                                    компетенций, рейтинги команд. Обо всем функционале расскажем совсем 
+                                    скоро.</p><br> <p>Если с платформой возникнут проблемы, пишите нашей службе 
+                                    поддержки: support@tspolls.ru</p><br> 
 
 
                                             <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
