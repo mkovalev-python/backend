@@ -820,7 +820,6 @@ class CreateTest(APIView):
 
     @staticmethod
     def post(request):
-        try:
             test = Test(title=request.data['values']['name'],
                         description=request.data['values']['description'],
                         points=request.data['values']['points'],
@@ -835,8 +834,6 @@ class CreateTest(APIView):
                     answer.save()
 
             return Response(status=status.HTTP_201_CREATED)
-        except:
-            return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
 class GetTests(APIView):

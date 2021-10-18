@@ -107,7 +107,7 @@ class Questions(models.Model):
     poll = models.ForeignKey(Polls, on_delete=models.CASCADE)
     question = models.CharField('Вопрос', max_length=500, unique=False)
     answer = models.CharField('Ответ', max_length=500)
-    freeAnswer = models.BooleanField('Свободный ответ', default=False)
+    freeAnswer = models.BooleanField('Свободный ответ', default=False, null=True)
 
     def __str__(self):
         return self.question

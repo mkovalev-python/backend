@@ -53,7 +53,7 @@ def general_save(request):
               session_id=request['values']['session']).save()
 
 
-def save_question_and_answer(request, answer, question, freeAnswer):
+def save_question_and_answer(request, answer, question, freeAnswer=None):
     Questions(poll_id=Polls.objects.get(title=request['info']['values']['title'],
                                         description=request['info']['values']['description']).id,
               question=question,
