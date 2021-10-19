@@ -1155,7 +1155,7 @@ class SendNewPass(APIView):
 
         message = MIMEMultipart()
         message['Subject'] = 'Параметры для входа в систему опросов ТС'
-        message['From'] = 'support@tspolls.ru'
+        message['From'] = 'postmaster@tspolls.ru'
         message['To'] = get_email_user.email
         message['BCC'] = 'mkovalevhse@yandex.ru'
 
@@ -1171,7 +1171,7 @@ class SendNewPass(APIView):
                                     различные службы, других участников и даже себя. Платформа покажет динамику ваших 
                                     компетенций, рейтинги команд. Обо всем функционале расскажем совсем 
                                     скоро.</p><br> <p>Если с платформой возникнут проблемы, пишите нашей службе 
-                                    поддержки: support@tspolls.ru</p><br> 
+                                    поддержки: postmaster@tspolls.ru</p><br> 
 
 
                                     <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
@@ -1194,7 +1194,7 @@ class SendNewPass(APIView):
             server.starttls(context=context)
             server.ehlo()
             try:
-                server.login('support@tspolls.ru', 'Prosto2021')
+                server.login('postmaster@tspolls.ru', '1234567892qQ')
                 server.sendmail(message['From'], message['To'], message.as_string())
                 server.quit()
             except:
@@ -1264,7 +1264,7 @@ class PostPassword(APIView):
 
         message = MIMEMultipart()
         message['Subject'] = 'Параметры для входа в систему опросов ТС'
-        message['From'] = 'noreply@tspolls.ru'
+        message['From'] = 'postmaster@tspolls.ru'
         message['To'] = get_email_user.email
 
         html = """\
@@ -1279,7 +1279,7 @@ class PostPassword(APIView):
                                     различные службы, других участников и даже себя. Платформа покажет динамику ваших 
                                     компетенций, рейтинги команд. Обо всем функционале расскажем совсем 
                                     скоро.</p><br> <p>Если с платформой возникнут проблемы, пишите нашей службе 
-                                    поддержки: support@tspolls.ru</p><br> 
+                                    поддержки: postmaster@tspolls.ru</p><br> 
 
 
                                             <p>Логин и пароль вы найдете ниже. Не откладывайте, переходите по ссылке сейчас.</p><br>
@@ -1302,7 +1302,7 @@ class PostPassword(APIView):
             server.starttls(context=context)
             server.ehlo()
             try:
-                server.login('noreply@tspolls.ru', 'HGsp#u29mm')
+                server.login('postmaster@tspolls.ru', '1234567892qQ')
                 server.sendmail(message['From'], message['To'], message.as_string())
                 server.quit()
                 get_email_user.save()
