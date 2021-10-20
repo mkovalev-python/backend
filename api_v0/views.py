@@ -1155,7 +1155,7 @@ class SendNewPass(APIView):
 
         message = MIMEMultipart()
         message['Subject'] = 'Параметры для входа в систему опросов ТС'
-        message['From'] = 'postmaster@tspolls.ru'
+        message['From'] = 'master@tspolls.ru'
         message['To'] = get_email_user.email
         message['BCC'] = 'mkovalevhse@yandex.ru'
 
@@ -1194,7 +1194,7 @@ class SendNewPass(APIView):
             server.starttls(context=context)
             server.ehlo()
             try:
-                server.login('postmaster@tspolls.ru', '1234567892qQ')
+                server.login('master@tspolls.ru', '124578QWas')
                 server.sendmail(message['From'], message['To'], message.as_string())
                 server.quit()
             except:
@@ -1264,7 +1264,7 @@ class PostPassword(APIView):
 
         message = MIMEMultipart()
         message['Subject'] = 'Параметры для входа в систему опросов ТС'
-        message['From'] = 'postmaster@tspolls.ru'
+        message['From'] = 'master@tspolls.ru'
         message['To'] = get_email_user.email
 
         html = """\
@@ -1302,7 +1302,7 @@ class PostPassword(APIView):
             server.starttls(context=context)
             server.ehlo()
             try:
-                server.login('postmaster@tspolls.ru', '1234567892qQ')
+                server.login('master@tspolls.ru', '124578QWas')
                 server.sendmail(message['From'], message['To'], message.as_string())
                 server.quit()
                 get_email_user.save()
